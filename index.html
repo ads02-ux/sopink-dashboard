@@ -132,24 +132,76 @@ footer b{color:var(--pink-dark)}
 
 /* sidebar */
 .layout{display:flex;min-height:100vh}
-.sidebar{width:220px;background:#0E1A3E;flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:50;box-shadow:3px 0 20px rgba(0,0,0,.15)}
-.content-wrap{margin-left:220px;flex:1;min-width:0}
+.sidebar{width:230px;background:linear-gradient(165deg,#ff3d96 0%,#e6127a 55%,#c10e68 100%);flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:50;box-shadow:4px 0 24px rgba(230,18,122,.25)}
+.content-wrap{margin-left:230px;flex:1;min-width:0}
 .sb-logo{padding:20px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
-.sb-logo-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--pink),var(--pink-light));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-family:'Prompt',sans-serif;font-size:14px;flex-shrink:0}
+.sb-logo-icon{width:40px;height:40px;border-radius:12px;background:#ffffff;display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--pink-dark);font-family:'Prompt',sans-serif;font-size:14px;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .sb-logo-name{font-family:'Prompt',sans-serif;font-weight:700;color:#fff;font-size:14px;letter-spacing:.5px}
-.sb-logo-sub{font-size:10px;color:#8290b3;letter-spacing:1.5px;margin-top:1px}
+.sb-logo-sub{font-size:10px;color:rgba(255,255,255,.75);letter-spacing:1.5px;margin-top:1px}
 .sb-nav{padding:14px 10px;flex:1}
-.sb-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;color:rgba(255,255,255,.65);font-size:13.5px;font-weight:500;cursor:pointer;margin-bottom:4px;transition:.15s;white-space:nowrap}
-.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
-.sb-item.active{background:linear-gradient(135deg,var(--pink),var(--pink-dark));color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(230,18,122,.35)}
+.sb-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px 0 0 12px;margin-right:-22px;padding-right:36px;color:rgba(255,255,255,.85);font-size:13.5px;font-weight:500;cursor:pointer;margin-bottom:5px;transition:.15s;white-space:nowrap}
+.sb-item:hover{background:rgba(255,255,255,.14);color:#fff}
+.sb-item.active{background:var(--pink-pale);color:var(--pink-dark);font-weight:700;box-shadow:-4px 4px 14px rgba(0,0,0,.08)}
+.sb-item.active .sb-icon{filter:none}
 .sb-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-.sb-toggle{display:none;position:fixed;top:14px;left:14px;z-index:200;background:#0E1A3E;border:none;border-radius:10px;padding:8px 11px;color:#fff;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.sb-toggle{display:none;position:fixed;top:14px;left:14px;z-index:200;background:var(--pink);border:none;border-radius:10px;padding:8px 11px;color:#fff;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(230,18,122,.4)}
 @media(max-width:820px){
   .sb-toggle{display:block}
   .sidebar{transform:translateX(-100%);transition:transform .2s ease}
   .sidebar.open{transform:translateX(0)}
   .content-wrap{margin-left:0}
 }
+
+/* ---- AI / Ranking / Video / Alert feature styles ---- */
+.fx-panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:20px}
+.fx-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.fx-sub{font-size:12.5px;color:var(--text-soft);margin-bottom:16px}
+.fx-empty{text-align:center;padding:40px 20px;color:var(--text-soft)}
+
+.ai-box{border-radius:16px;padding:18px 20px;border:1px solid var(--border);background:var(--pink-pale);margin-bottom:16px}
+.ai-dec{font-family:'Prompt',sans-serif;font-size:17px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.ai-sub{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-soft);margin:12px 0 6px}
+.ai-list{list-style:none;padding:0;margin:0}
+.ai-list li{font-size:13.5px;line-height:1.8;padding:2px 0 2px 20px;position:relative;color:var(--text)}
+.ai-list.why li::before{content:'▸';position:absolute;left:0;color:var(--pink)}
+.ai-list.act li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:700}
+
+.ai-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.ai-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow)}
+.ai-card h4{font-family:'Prompt',sans-serif;font-size:13.5px;color:var(--pink-dark);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ai-card p{font-size:12.5px;color:var(--text);line-height:1.6}
+
+.lb-list{display:flex;flex-direction:column;gap:10px}
+.lb-row{display:grid;grid-template-columns:44px 1fr 100px 100px 90px;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 16px}
+.rank-badge{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;font-family:'Prompt',sans-serif;font-weight:800;font-size:14px;color:#fff}
+.rank-badge.r1{background:linear-gradient(135deg,#ffd76a,#e0a825)}
+.rank-badge.r2{background:linear-gradient(135deg,#d7dbe3,#9aa2b1)}
+.rank-badge.r3{background:linear-gradient(135deg,#e3a26a,#b3703a)}
+.rank-badge.rn{background:var(--pink-light)}
+.lb-name{font-weight:700;font-size:13.5px;color:var(--text)}
+.lb-meta{font-size:11.5px;color:var(--text-soft);margin-top:2px}
+.lb-val{text-align:right;font-size:13px;color:var(--text)}
+.lb-val b{display:block;font-size:11px;color:var(--text-soft);font-weight:600}
+.roas-chip{display:inline-block;padding:4px 12px;border-radius:999px;font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;text-align:center}
+.roas-chip.top{background:rgba(31,184,114,.12);color:var(--green)}
+.roas-chip.mid{background:rgba(212,163,57,.15);color:var(--gold)}
+.roas-chip.low{background:rgba(229,72,77,.12);color:var(--red)}
+
+.video-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.video-tbl th{text-align:left;padding:10px 12px;background:var(--pink-pale);color:var(--pink-dark);font-weight:700;font-size:12px;text-transform:uppercase}
+.video-tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.hook-bar{height:6px;border-radius:3px;background:var(--border);overflow:hidden;min-width:60px}
+.hook-bar-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--pink-light))}
+
+.alert-list{display:flex;flex-direction:column;gap:12px}
+.alert-item{display:flex;gap:14px;align-items:flex-start;background:#fff;border-radius:14px;padding:14px 16px;border-left:4px solid var(--border);box-shadow:var(--shadow)}
+.alert-item.crit{border-left-color:var(--red)}
+.alert-item.warn{border-left-color:var(--gold)}
+.alert-item.info{border-left-color:var(--pink)}
+.alert-item.good{border-left-color:var(--green)}
+.alert-icon{font-size:20px;flex-shrink:0}
+.alert-body b{display:block;font-size:13.5px;color:var(--text);margin-bottom:3px}
+.alert-body span{font-size:12.5px;color:var(--text-soft)}
 </style>
 </head>
 <body>
@@ -276,11 +328,43 @@ footer b{color:var(--pink-dark)}
 
 </div><!-- /view-dashboard -->
 
-<div id="view-placeholder" style="display:none">
-  <div class="panel" style="text-align:center;padding:60px 20px">
-    <div style="font-size:44px;margin-bottom:14px" id="phIcon">🚧</div>
-    <h2 style="color:var(--pink-dark);margin-bottom:8px;font-family:'Prompt',sans-serif" id="phTitle">Coming soon</h2>
-    <p style="color:var(--text-soft)">ฟีเจอร์นี้กำลังพัฒนา เร็วๆ นี้ครับ</p>
+<div id="view-ai-content" style="display:none">
+  <div class="fx-panel">
+    <div class="fx-title">🤖 AI แนะนำคอนเทนต์</div>
+    <div class="fx-sub">วิเคราะห์จากผลลัพธ์โฆษณาจริงย้อนหลัง 30 วัน</div>
+    <div id="aiContentBody"><div class="fx-empty">กำลังวิเคราะห์...</div></div>
+  </div>
+</div>
+
+<div id="view-ai-ads" style="display:none">
+  <div class="fx-panel">
+    <div class="fx-title">📈 AI วิเคราะห์ ADS</div>
+    <div class="fx-sub">สรุปสถานะแคมเปญและคำแนะนำขั้นถัดไป (30 วันล่าสุด)</div>
+    <div id="aiAdsBody"><div class="fx-empty">กำลังวิเคราะห์...</div></div>
+  </div>
+</div>
+
+<div id="view-video" style="display:none">
+  <div class="fx-panel">
+    <div class="fx-title">🎬 วิเคราะห์วีดีโอ</div>
+    <div class="fx-sub">อัตราการดูจบและ Hook Rate ของแต่ละแคมเปญวิดีโอ (30 วันล่าสุด)</div>
+    <div id="videoBody"><div class="fx-empty">กำลังโหลดข้อมูลวิดีโอ...</div></div>
+  </div>
+</div>
+
+<div id="view-ranking" style="display:none">
+  <div class="fx-panel">
+    <div class="fx-title">🏆 ชาร์ตอันดับแคมเปญ</div>
+    <div class="fx-sub">จัดอันดับแคมเปญตาม ROAS (30 วันล่าสุด)</div>
+    <div id="rankingBody"><div class="fx-empty">กำลังจัดอันดับ...</div></div>
+  </div>
+</div>
+
+<div id="view-alert" style="display:none">
+  <div class="fx-panel">
+    <div class="fx-title">🔔 Alert การแจ้งเตือน</div>
+    <div class="fx-sub">ตรวจจับความผิดปกติของแคมเปญอัตโนมัติ</div>
+    <div id="alertBody"><div class="fx-empty">กำลังตรวจสอบ...</div></div>
   </div>
 </div>
 
@@ -325,6 +409,8 @@ function hideBanner(){ document.getElementById('banner').style.display='none'; }
 
 function calcRow(ins){
   var spend = parseFloat(ins.spend) || 0;
+  var clicks = parseInt(ins.clicks) || 0;
+  var campaign = ins.campaign_name || 'ไม่ระบุแคมเปญ';
   var purchases = 0, conversations = 0;
   (ins.actions||[]).forEach(function(a){
     if(a.action_type === 'omni_purchase') purchases += parseFloat(a.value)||0;
@@ -339,8 +425,10 @@ function calcRow(ins){
   var revenue = omniRev > 0 ? omniRev : purchaseRev;
   return {
     date: ins.date_start || '',
+    campaign: campaign,
     spend: spend,
     impressions: parseInt(ins.impressions) || 0,
+    clicks: clicks,
     purchases: purchases,
     conversations: conversations,
     revenue: revenue
@@ -366,7 +454,7 @@ function loadData(){
   var now = new Date();
   var since = new Date(now); since.setDate(since.getDate()-89);
   var sinceStr = toYMD(since), untilStr = toYMD(now);
-  var fields = 'campaign_name,adset_name,spend,impressions,actions,action_values';
+  var fields = 'campaign_name,adset_name,spend,impressions,clicks,actions,action_values';
   var timeRange = encodeURIComponent(JSON.stringify({since:sinceStr, until:untilStr}));
   var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields
     + '&level=adset&time_range=' + timeRange
@@ -498,27 +586,238 @@ document.getElementById('refreshBtn').addEventListener('click', function(){
   setTimeout(function(){ self.classList.remove('spin'); }, 800);
 });
 
-var VIEW_TITLES = {
-  'ai-content': ['🤖','AI แนะนำคอนเทนต์'],
-  'ai-ads': ['📈','AI วิเคราะห์ ADS'],
-  'video': ['🎬','วิเคราะห์วีดีโอ'],
-  'ranking': ['🏆','ชาร์ตอันดับ'],
-  'alert': ['🔔','Alert การแจ้งเตือน']
+var ALL_VIEWS = ['dashboard','ai-content','ai-ads','video','ranking','alert'];
+var loadedViews = {};
+
+function last30Rows(){
+  var today = todayBangkok();
+  var start = addDaysStr(today, -29);
+  return rawRows.filter(function(r){ return r.date >= start && r.date <= today; });
+}
+
+function aggTotals(rows){
+  var t = {spend:0, impressions:0, clicks:0, purchases:0, conversations:0, revenue:0};
+  rows.forEach(function(r){
+    t.spend += r.spend; t.impressions += r.impressions; t.clicks += (r.clicks||0);
+    t.purchases += r.purchases; t.conversations += r.conversations; t.revenue += r.revenue;
+  });
+  return t;
+}
+
+function aggByCampaign(rows){
+  var map = {};
+  rows.forEach(function(r){
+    var c = r.campaign || 'ไม่ระบุแคมเปญ';
+    if(!map[c]) map[c] = {campaign:c, spend:0, impressions:0, clicks:0, purchases:0, revenue:0};
+    map[c].spend += r.spend; map[c].impressions += r.impressions; map[c].clicks += (r.clicks||0);
+    map[c].purchases += r.purchases; map[c].revenue += r.revenue;
+  });
+  return Object.keys(map).map(function(k){ return map[k]; });
+}
+
+function renderAIContent(){
+  var rows = last30Rows();
+  var el = document.getElementById('aiContentBody');
+  if(rows.length === 0){ el.innerHTML = '<div class="fx-empty">ยังไม่มีข้อมูลเพียงพอสำหรับวิเคราะห์</div>'; return; }
+  var t = aggTotals(rows);
+  var ctr = t.impressions>0 ? (t.clicks/t.impressions*100) : 0;
+  var cvr = t.clicks>0 ? (t.purchases/t.clicks*100) : 0;
+  var byDate = aggregateByDate(rows);
+  var dates = Object.keys(byDate).sort();
+  var bestDate = null, bestRoas = -1;
+  dates.forEach(function(d){
+    var m = byDate[d];
+    var r = m.spend>0 ? (m.revenue/m.spend) : 0;
+    if(r > bestRoas){ bestRoas = r; bestDate = d; }
+  });
+
+  var ideas = [];
+  if(ctr < 1){
+    ideas.push({icon:'🎯', h:'รีเฟรช Creative', p:'CTR เฉลี่ย '+ctr.toFixed(2)+'% ค่อนข้างต่ำ ลองเปลี่ยนภาพปก/วิดีโอเปิดให้ดึงดูดขึ้น หรือทำ Hook ใน 3 วินาทีแรกให้แรงกว่านี้'});
+  } else {
+    ideas.push({icon:'✅', h:'Creative ทำงานได้ดี', p:'CTR เฉลี่ย '+ctr.toFixed(2)+'% อยู่ในเกณฑ์ดี ลองทำคอนเทนต์แนวเดิมเพิ่ม เช่น รีวิวจริง/ก่อน-หลัง'});
+  }
+  if(bestDate){
+    ideas.push({icon:'📅', h:'วันที่ผลลัพธ์ดีที่สุด', p:'วันที่ '+bestDate+' ทำ ROAS ได้ '+bestRoas.toFixed(2)+'x สูงสุดในช่วงนี้ ลองดูว่าโพสต์/แคมเปญไหนที่รันวันนั้นแล้วทำคอนเทนต์แนวนั้นซ้ำ'});
+  }
+  if(cvr < 5 && t.clicks > 20){
+    ideas.push({icon:'🛒', h:'ปิดการขายให้แรงขึ้น', p:'อัตราปิดการขายจากคลิก '+cvr.toFixed(1)+'% ยังต่ำ ลองเพิ่มรีวิว/โปรโมชั่นจำกัดเวลาในหน้า Landing page หรือแคปชั่น'});
+  }
+  ideas.push({icon:'💬', h:'ใช้ Conversation Ads', p:'มีคนทักแชท '+fmtInt(t.conversations)+' ครั้งใน 30 วัน ลองทำคอนเทนต์แนวถาม-ตอบ FAQ เพื่อดึงคนทักเข้ามาเพิ่ม'});
+
+  el.innerHTML = '<div class="ai-cards">' + ideas.map(function(i){
+    return '<div class="ai-card"><h4>'+i.icon+' '+i.h+'</h4><p>'+i.p+'</p></div>';
+  }).join('') + '</div>';
+}
+
+function renderAIAds(){
+  var rows = last30Rows();
+  var el = document.getElementById('aiAdsBody');
+  if(rows.length === 0){ el.innerHTML = '<div class="fx-empty">ยังไม่มีข้อมูลเพียงพอสำหรับวิเคราะห์</div>'; return; }
+  var t = aggTotals(rows);
+  var roas = t.spend>0 ? (t.revenue/t.spend) : 0;
+  var cpp = t.purchases>0 ? (t.spend/t.purchases) : 0;
+  var ctr = t.impressions>0 ? (t.clicks/t.impressions*100) : 0;
+
+  var dec, icon, why=[], act=[];
+  if(roas >= 2){
+    dec = 'คุ้มทุนมาก ควรเพิ่มงบ'; icon='🚀';
+    why.push('ROAS เฉลี่ย 30 วัน = '+roas.toFixed(2)+'x สูงกว่าเกณฑ์คุ้มทุน (1.0x) มาก');
+    why.push('ต้นทุนต่อออเดอร์ '+fmtMoney(cpp)+' อยู่ในระดับที่รับได้');
+    act.push('ทยอยเพิ่มงบ 15-20% ทุก 2-3 วัน แล้วดู ROAS ว่ายังทรงตัวไหม');
+    act.push('ขยายกลุ่มเป้าหมายที่ใกล้เคียงกับกลุ่มที่ซื้อแล้ว (Lookalike)');
+  } else if(roas >= 1){
+    dec = 'คุ้มทุน แต่ยังพอปรับได้'; icon='⚖️';
+    why.push('ROAS เฉลี่ย 30 วัน = '+roas.toFixed(2)+'x เกินจุดคุ้มทุนเล็กน้อย');
+    why.push('CTR เฉลี่ย '+ctr.toFixed(2)+'%');
+    act.push('ทดสอบ Creative ใหม่ 2-3 แบบ (A/B Test) เพื่อดันROASให้สูงขึ้น');
+    act.push('ตัดงบกลุ่มโฆษณาที่ ROAS ต่ำกว่าค่าเฉลี่ยออก');
+  } else {
+    dec = 'ยังไม่คุ้มทุน ต้องรีบปรับ'; icon='🛑';
+    why.push('ROAS เฉลี่ย 30 วัน = '+roas.toFixed(2)+'x ต่ำกว่าจุดคุ้มทุน (1.0x)');
+    why.push('ต้นทุนต่อออเดอร์ '+(t.purchases>0?fmtMoney(cpp):'ไม่มีออเดอร์เลย'));
+    act.push('หยุด/ลดงบกลุ่มโฆษณาที่ผลลัพธ์แย่ที่สุดก่อน');
+    act.push('เปลี่ยน Creative และข้อความโฆษณาใหม่ทั้งหมด');
+    act.push('ทบทวนกลุ่มเป้าหมายว่าตรงกับลูกค้าจริงหรือไม่');
+  }
+
+  var bg = roas>=2 ? '#e9fbf3' : (roas>=1 ? '#fff8e8' : '#fff0f0');
+  var col = roas>=2 ? 'var(--green)' : (roas>=1 ? 'var(--gold)' : 'var(--red)');
+
+  el.innerHTML = '<div class="ai-box" style="background:'+bg+'">'
+    + '<div class="ai-dec" style="color:'+col+'">'+icon+' '+dec+'</div>'
+    + '<div class="ai-sub">เหตุผล</div>'
+    + '<ul class="ai-list why">' + why.map(function(w){return '<li>'+w+'</li>';}).join('') + '</ul>'
+    + '<div class="ai-sub">ขั้นตอนถัดไป</div>'
+    + '<ul class="ai-list act">' + act.map(function(a){return '<li>'+a+'</li>';}).join('') + '</ul>'
+    + '</div>';
+}
+
+function renderRanking(){
+  var rows = last30Rows();
+  var el = document.getElementById('rankingBody');
+  var camps = aggByCampaign(rows).map(function(c){
+    c.roas = c.spend>0 ? (c.revenue/c.spend) : 0;
+    return c;
+  }).sort(function(a,b){ return b.roas - a.roas; });
+  if(camps.length === 0){ el.innerHTML = '<div class="fx-empty">ยังไม่มีข้อมูลแคมเปญ</div>'; return; }
+  var medalClass = ['r1','r2','r3'];
+  el.innerHTML = '<div class="lb-list">' + camps.map(function(c, i){
+    var badgeCls = i < 3 ? medalClass[i] : 'rn';
+    var badgeTxt = i < 3 ? ['🥇','🥈','🥉'][i] : (i+1);
+    var chipCls = c.roas >= 2 ? 'top' : (c.roas >= 1 ? 'mid' : 'low');
+    return '<div class="lb-row">'
+      + '<div class="rank-badge '+badgeCls+'">'+badgeTxt+'</div>'
+      + '<div><div class="lb-name">'+c.campaign+'</div><div class="lb-meta">'+fmtInt(c.purchases)+' ออเดอร์ &middot; '+fmtInt(c.impressions)+' Impr.</div></div>'
+      + '<div class="lb-val"><b>Spend</b>'+fmtMoney(c.spend)+'</div>'
+      + '<div class="lb-val"><b>Revenue</b>'+fmtMoney(c.revenue)+'</div>'
+      + '<div style="text-align:right"><span class="roas-chip '+chipCls+'">'+c.roas.toFixed(2)+'x</span></div>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+
+function renderAlert(){
+  var el = document.getElementById('alertBody');
+  var today = todayBangkok();
+  var y = addDaysStr(today,-1);
+  var d2 = addDaysStr(today,-2);
+  var alerts = [];
+
+  var mToday = dailyAgg[today], mY = dailyAgg[y], mD2 = dailyAgg[d2];
+
+  if(mY){
+    var roasY = mY.spend>0 ? (mY.revenue/mY.spend) : 0;
+    if(mY.spend > 0 && mY.revenue === 0){
+      alerts.push({sev:'crit', icon:'🛑', title:'เมื่อวานใช้งบแต่ไม่มียอดขายเลย', desc:'ใช้ไป '+fmtMoney(mY.spend)+' แต่ยอดขาย ฿0 ควรตรวจสอบ Pixel/Creative ด่วน'});
+    } else if(roasY < 1 && mY.spend > 0){
+      alerts.push({sev:'warn', icon:'⚠️', title:'ROAS เมื่อวานต่ำกว่าจุดคุ้มทุน', desc:'ROAS = '+roasY.toFixed(2)+'x (ใช้ '+fmtMoney(mY.spend)+' ได้ยอดขาย '+fmtMoney(mY.revenue)+')'});
+    } else if(roasY >= 2){
+      alerts.push({sev:'good', icon:'🎉', title:'เมื่อวานผลลัพธ์ดีมาก', desc:'ROAS = '+roasY.toFixed(2)+'x ลองเพิ่มงบดูได้'});
+    }
+  }
+
+  if(mToday && mY && mY.spend > 0){
+    var change = (mToday.spend - mY.spend) / mY.spend * 100;
+    if(change > 50){
+      alerts.push({sev:'info', icon:'📈', title:'งบวันนี้พุ่งขึ้นกว่าเมื่อวาน '+change.toFixed(0)+'%', desc:'ใช้ไปแล้ว '+fmtMoney(mToday.spend)+' เทียบกับเมื่อวาน '+fmtMoney(mY.spend)});
+    }
+  }
+
+  var last3 = [today,y,d2].map(function(d){ return dailyAgg[d]; }).filter(Boolean);
+  var totalPurchase3 = last3.reduce(function(s,m){ return s + m.purchases; }, 0);
+  if(last3.length >= 3 && totalPurchase3 === 0){
+    var totalSpend3 = last3.reduce(function(s,m){ return s + m.spend; }, 0);
+    if(totalSpend3 > 0) alerts.push({sev:'crit', icon:'🚨', title:'ไม่มีออเดอร์เลย 3 วันติดต่อกัน', desc:'ใช้งบไปแล้ว '+fmtMoney(totalSpend3)+' โดยไม่มีคำสั่งซื้อ ควรหยุดพิจารณาปรับแคมเปญด่วน'});
+  }
+
+  if(alerts.length === 0){
+    alerts.push({sev:'good', icon:'✅', title:'ไม่มีความผิดปกติ', desc:'ผลลัพธ์แคมเปญอยู่ในเกณฑ์ปกติช่วงนี้'});
+  }
+
+  el.innerHTML = '<div class="alert-list">' + alerts.map(function(a){
+    return '<div class="alert-item '+a.sev+'"><div class="alert-icon">'+a.icon+'</div><div class="alert-body"><b>'+a.title+'</b><span>'+a.desc+'</span></div></div>';
+  }).join('') + '</div>';
+}
+
+function renderVideo(){
+  var el = document.getElementById('videoBody');
+  var now = new Date();
+  var since = new Date(now); since.setDate(since.getDate()-29);
+  var fields = 'campaign_name,impressions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions,video_play_actions';
+  var timeRange = encodeURIComponent(JSON.stringify({since:toYMD(since), until:toYMD(now)}));
+  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields
+    + '&level=campaign&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
+  fetch(url).then(function(r){ return r.json(); }).then(function(d){
+    if(d.error || !d.data || d.data.length === 0){
+      el.innerHTML = '<div class="fx-empty">ไม่มีข้อมูลวิดีโอในช่วง 30 วันล่าสุด (อาจไม่มีแคมเปญวิดีโอที่รันอยู่)</div>';
+      return;
+    }
+    function sumAction(arr){ var s=0; (arr||[]).forEach(function(a){ s += parseFloat(a.value)||0; }); return s; }
+    var rows = d.data.map(function(c){
+      var plays = sumAction(c.video_play_actions);
+      var p25 = sumAction(c.video_p25_watched_actions);
+      var p100 = sumAction(c.video_p100_watched_actions);
+      var impr = parseInt(c.impressions)||0;
+      var hookRate = impr>0 ? (p25/impr*100) : 0;
+      var completeRate = plays>0 ? (p100/plays*100) : 0;
+      return {name:c.campaign_name||'ไม่ระบุ', plays:plays, hookRate:hookRate, completeRate:completeRate};
+    }).filter(function(r){ return r.plays > 0; }).sort(function(a,b){ return b.plays - a.plays; });
+    if(rows.length === 0){
+      el.innerHTML = '<div class="fx-empty">ไม่พบแคมเปญที่มีการเล่นวิดีโอในช่วงนี้</div>';
+      return;
+    }
+    el.innerHTML = '<table class="video-tbl"><thead><tr><th>แคมเปญ</th><th>ยอดเล่น</th><th>Hook Rate (ดูถึง 25%)</th><th>ดูจบ (100%)</th></tr></thead><tbody>'
+      + rows.map(function(r){
+          return '<tr><td>'+r.name+'</td><td>'+fmtInt(r.plays)+'</td>'
+            + '<td><div style="display:flex;align-items:center;gap:8px"><div class="hook-bar" style="flex:1"><div class="hook-bar-fill" style="width:'+Math.min(100,r.hookRate).toFixed(0)+'%"></div></div><span>'+r.hookRate.toFixed(1)+'%</span></div></td>'
+            + '<td>'+r.completeRate.toFixed(1)+'%</td></tr>';
+        }).join('')
+      + '</tbody></table>';
+  }).catch(function(err){
+    el.innerHTML = '<div class="fx-empty">โหลดข้อมูลวิดีโอไม่สำเร็จ: '+err.message+'</div>';
+  });
+}
+
+var VIEW_RENDERERS = {
+  'ai-content': renderAIContent,
+  'ai-ads': renderAIAds,
+  'video': renderVideo,
+  'ranking': renderRanking,
+  'alert': renderAlert
 };
+
 document.querySelectorAll('.sb-item').forEach(function(item){
   item.addEventListener('click', function(){
     document.querySelectorAll('.sb-item').forEach(function(i){ i.classList.remove('active'); });
     this.classList.add('active');
-    var view = this.dataset.view;
-    if(view === 'dashboard'){
-      document.getElementById('view-dashboard').style.display = 'block';
-      document.getElementById('view-placeholder').style.display = 'none';
-    } else {
-      document.getElementById('view-dashboard').style.display = 'none';
-      document.getElementById('view-placeholder').style.display = 'block';
-      var info = VIEW_TITLES[view] || ['🚧',''];
-      document.getElementById('phIcon').textContent = info[0];
-      document.getElementById('phTitle').textContent = info[1];
+    var v = this.dataset.view;
+    ALL_VIEWS.forEach(function(name){
+      var elx = document.getElementById('view-' + name);
+      if(elx) elx.style.display = (name === v) ? 'block' : 'none';
+    });
+    if(v !== 'dashboard' && !loadedViews[v] && VIEW_RENDERERS[v]){
+      loadedViews[v] = true;
+      VIEW_RENDERERS[v]();
     }
     var sb = document.getElementById('sidebar');
     if(sb) sb.classList.remove('open');
