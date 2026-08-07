@@ -129,10 +129,52 @@ tr:hover td{background:var(--pink-pale)}
 }
 footer{text-align:center;margin-top:30px;color:var(--text-soft);font-size:12px}
 footer b{color:var(--pink-dark)}
+
+/* sidebar */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#0E1A3E;flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;z-index:50;box-shadow:3px 0 20px rgba(0,0,0,.15)}
+.content-wrap{margin-left:220px;flex:1;min-width:0}
+.sb-logo{padding:20px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+.sb-logo-icon{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--pink),var(--pink-light));display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-family:'Prompt',sans-serif;font-size:14px;flex-shrink:0}
+.sb-logo-name{font-family:'Prompt',sans-serif;font-weight:700;color:#fff;font-size:14px;letter-spacing:.5px}
+.sb-logo-sub{font-size:10px;color:#8290b3;letter-spacing:1.5px;margin-top:1px}
+.sb-nav{padding:14px 10px;flex:1}
+.sb-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;color:rgba(255,255,255,.65);font-size:13.5px;font-weight:500;cursor:pointer;margin-bottom:4px;transition:.15s;white-space:nowrap}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-item.active{background:linear-gradient(135deg,var(--pink),var(--pink-dark));color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(230,18,122,.35)}
+.sb-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-toggle{display:none;position:fixed;top:14px;left:14px;z-index:200;background:#0E1A3E;border:none;border-radius:10px;padding:8px 11px;color:#fff;font-size:16px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+@media(max-width:820px){
+  .sb-toggle{display:block}
+  .sidebar{transform:translateX(-100%);transition:transform .2s ease}
+  .sidebar.open{transform:translateX(0)}
+  .content-wrap{margin-left:0}
+}
 </style>
 </head>
 <body>
+<button class="sb-toggle" id="sbToggle">☰</button>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">SP</div>
+      <div>
+        <div class="sb-logo-name">SO PINK</div>
+        <div class="sb-logo-sub">ADS DASHBOARD</div>
+      </div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-item active" data-view="dashboard"><span class="sb-icon">📊</span>Dashboard</div>
+      <div class="sb-item" data-view="ai-content"><span class="sb-icon">🤖</span>AI แนะนำคอนเทนต์</div>
+      <div class="sb-item" data-view="ai-ads"><span class="sb-icon">📈</span>AI วิเคราะห์ ADS</div>
+      <div class="sb-item" data-view="video"><span class="sb-icon">🎬</span>วิเคราะห์วีดีโอ</div>
+      <div class="sb-item" data-view="ranking"><span class="sb-icon">🏆</span>ชาร์ตอันดับ</div>
+      <div class="sb-item" data-view="alert"><span class="sb-icon">🔔</span>Alert การแจ้งเตือน</div>
+    </nav>
+  </aside>
+  <div class="content-wrap">
 <div class="wrap">
+<div id="view-dashboard">
 
   <header class="top">
     <div class="brand">
@@ -231,7 +273,20 @@ footer b{color:var(--pink-dark)}
   </div>
 
   <footer>Powered by <b>SO PINK</b> &middot; Ads Analytics Dashboard &middot; ข้อมูลจาก Facebook Marketing API</footer>
+
+</div><!-- /view-dashboard -->
+
+<div id="view-placeholder" style="display:none">
+  <div class="panel" style="text-align:center;padding:60px 20px">
+    <div style="font-size:44px;margin-bottom:14px" id="phIcon">🚧</div>
+    <h2 style="color:var(--pink-dark);margin-bottom:8px;font-family:'Prompt',sans-serif" id="phTitle">Coming soon</h2>
+    <p style="color:var(--text-soft)">ฟีเจอร์นี้กำลังพัฒนา เร็วๆ นี้ครับ</p>
+  </div>
 </div>
+
+</div><!-- /wrap -->
+</div><!-- /content-wrap -->
+</div><!-- /layout -->
 
 <script>
 // ===== CONFIG =====
@@ -442,6 +497,39 @@ document.getElementById('refreshBtn').addEventListener('click', function(){
   loadData();
   setTimeout(function(){ self.classList.remove('spin'); }, 800);
 });
+
+var VIEW_TITLES = {
+  'ai-content': ['🤖','AI แนะนำคอนเทนต์'],
+  'ai-ads': ['📈','AI วิเคราะห์ ADS'],
+  'video': ['🎬','วิเคราะห์วีดีโอ'],
+  'ranking': ['🏆','ชาร์ตอันดับ'],
+  'alert': ['🔔','Alert การแจ้งเตือน']
+};
+document.querySelectorAll('.sb-item').forEach(function(item){
+  item.addEventListener('click', function(){
+    document.querySelectorAll('.sb-item').forEach(function(i){ i.classList.remove('active'); });
+    this.classList.add('active');
+    var view = this.dataset.view;
+    if(view === 'dashboard'){
+      document.getElementById('view-dashboard').style.display = 'block';
+      document.getElementById('view-placeholder').style.display = 'none';
+    } else {
+      document.getElementById('view-dashboard').style.display = 'none';
+      document.getElementById('view-placeholder').style.display = 'block';
+      var info = VIEW_TITLES[view] || ['🚧',''];
+      document.getElementById('phIcon').textContent = info[0];
+      document.getElementById('phTitle').textContent = info[1];
+    }
+    var sb = document.getElementById('sidebar');
+    if(sb) sb.classList.remove('open');
+  });
+});
+var sbToggle = document.getElementById('sbToggle');
+if(sbToggle){
+  sbToggle.addEventListener('click', function(){
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+}
 
 loadData();
 </script>
