@@ -333,6 +333,11 @@ footer b{color:var(--pink-dark)}
 .camp-creative-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;text-align:center;position:relative}
 .camp-creative-card a{display:block;position:relative}
 .camp-creative-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);color:#fff;font-size:20px}
+.camp-creative-thumb-btn{cursor:pointer;display:block;position:relative}
+.camp-video-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+.camp-video-modal-overlay.open{display:flex}
+.camp-video-modal{background:#000;border-radius:12px;overflow:hidden;max-width:560px;width:100%;position:relative}
+.camp-video-modal-close{position:absolute;top:-36px;right:0;background:none;border:none;color:#fff;font-size:26px;cursor:pointer;line-height:1}
 .camp-creative-card img{width:100%;height:80px;object-fit:cover;display:block}
 .camp-creative-ph{width:100%;height:80px;display:flex;align-items:center;justify-content:center;background:var(--pink-pale);font-size:20px}
 .camp-creative-name{font-size:10px;padding:5px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1603,6 +1608,27 @@ function renderCampAiCards(t, roas, ctr, rows){
   }).join('');
 }
 
+function ensureCampVideoModal(){
+  if(document.getElementById('campVideoModalOverlay')) return;
+  var overlay = document.createElement('div');
+  overlay.id = 'campVideoModalOverlay';
+  overlay.className = 'camp-video-modal-overlay';
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) closeCampVideoModal(); });
+  overlay.innerHTML = '<div class="camp-video-modal"><button class="camp-video-modal-close" id="campVideoModalClose">&times;</button><div id="campVideoModalBody"></div></div>';
+  document.body.appendChild(overlay);
+  document.getElementById('campVideoModalClose').addEventListener('click', closeCampVideoModal);
+}
+function openCampVideoModal(watchUrl){
+  ensureCampVideoModal();
+  var embed = 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(watchUrl) + '&show_text=false&width=560&autoplay=true';
+  document.getElementById('campVideoModalBody').innerHTML = '<iframe src="'+embed+'" width="100%" height="315" style="border:none;display:block" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+  document.getElementById('campVideoModalOverlay').classList.add('open');
+}
+function closeCampVideoModal(){
+  var ov = document.getElementById('campVideoModalOverlay');
+  if(ov){ ov.classList.remove('open'); var b=document.getElementById('campVideoModalBody'); if(b) b.innerHTML=''; }
+}
+
 function fetchCampCreatives(){
   var grid = document.getElementById('campCreativesGrid');
   grid.innerHTML = '<div class="fx-empty">⏳ กำลังดึงข้อมูล...</div>';
@@ -1618,7 +1644,8 @@ function fetchCampCreatives(){
       grid.innerHTML = '<div class="fx-empty">ไม่พบครีเอทีฟสำหรับแคมเปญนี้</div>';
       return;
     }
-    grid.innerHTML = d.data.map(function(ad){
+    window.__campCreativeAds = d.data;
+    grid.innerHTML = d.data.map(function(ad, idx){
       var cr = ad.creative || {};
       var img = cr.thumbnail_url || cr.image_url || '';
       var vid = cr.video_id || '';
@@ -1626,12 +1653,26 @@ function fetchCampCreatives(){
         : (ad.effective_object_story_id ? ('https://www.facebook.com/' + ad.effective_object_story_id.replace('_','/posts/')) : '');
       var imgTag = img ? '<img src="'+img+'" onerror="this.style.display=\'none\'">' : '<div class="camp-creative-ph">🎬</div>';
       var playBadge = vid ? '<div class="camp-creative-play">▶</div>' : '';
-      var thumbHtml = link ? ('<a href="'+link+'" target="_blank" rel="noopener">'+imgTag+playBadge+'</a>') : imgTag;
+      var thumbHtml;
+      if(vid){
+        thumbHtml = '<div class="camp-creative-thumb-btn" data-idx="'+idx+'">'+imgTag+playBadge+'</div>';
+      } else if(link){
+        thumbHtml = '<a href="'+link+'" target="_blank" rel="noopener">'+imgTag+'</a>';
+      } else {
+        thumbHtml = imgTag;
+      }
       return '<div class="camp-creative-card">'
         + thumbHtml
         + '<div class="camp-creative-name" title="'+(ad.name||'')+'">'+(ad.name||'ไม่ระบุ')+'</div>'
         + '</div>';
     }).join('');
+    grid.querySelectorAll('.camp-creative-thumb-btn').forEach(function(elm){
+      elm.addEventListener('click', function(){
+        var ad = window.__campCreativeAds[parseInt(this.dataset.idx)];
+        var vid = ad.creative && ad.creative.video_id;
+        if(vid) openCampVideoModal('https://www.facebook.com/watch/?v=' + vid);
+      });
+    });
   }).catch(function(err){
     grid.innerHTML = '<div class="fx-empty">โหลดไม่สำเร็จ: '+err.message+'</div>';
   });
