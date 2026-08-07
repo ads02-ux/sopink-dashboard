@@ -330,7 +330,9 @@ footer b{color:var(--pink-dark)}
 .camp-fetch-btn{width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--pink-light);background:var(--pink-pale);color:var(--pink-dark);font-weight:700;font-size:12.5px;cursor:pointer;margin-bottom:12px}
 .camp-fetch-btn:hover{background:#ffe9f2}
 .camp-creatives-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.camp-creative-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;text-align:center}
+.camp-creative-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;text-align:center;position:relative}
+.camp-creative-card a{display:block;position:relative}
+.camp-creative-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);color:#fff;font-size:20px}
 .camp-creative-card img{width:100%;height:80px;object-fit:cover;display:block}
 .camp-creative-ph{width:100%;height:80px;display:flex;align-items:center;justify-content:center;background:var(--pink-pale);font-size:20px}
 .camp-creative-name{font-size:10px;padding:5px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1610,7 +1612,7 @@ function fetchCampCreatives(){
     return;
   }
   var filtering = encodeURIComponent(JSON.stringify([{field:'campaign.id', operator:'EQUAL', value:camp.id}]));
-  var url = FB_API + ACCOUNT_ID + '/ads?filtering=' + filtering + '&fields=id,name,creative{thumbnail_url,image_url,video_id}&limit=50&access_token=' + ACCOUNT_TOKEN_NAME;
+  var url = FB_API + ACCOUNT_ID + '/ads?filtering=' + filtering + '&fields=id,name,creative{thumbnail_url,image_url,video_id},effective_object_story_id&limit=50&access_token=' + ACCOUNT_TOKEN_NAME;
   fetch(url).then(function(r){return r.json();}).then(function(d){
     if(d.error || !d.data || d.data.length===0){
       grid.innerHTML = '<div class="fx-empty">ไม่พบครีเอทีฟสำหรับแคมเปญนี้</div>';
@@ -1619,8 +1621,14 @@ function fetchCampCreatives(){
     grid.innerHTML = d.data.map(function(ad){
       var cr = ad.creative || {};
       var img = cr.thumbnail_url || cr.image_url || '';
+      var vid = cr.video_id || '';
+      var link = vid ? ('https://www.facebook.com/watch/?v=' + vid)
+        : (ad.effective_object_story_id ? ('https://www.facebook.com/' + ad.effective_object_story_id.replace('_','/posts/')) : '');
+      var imgTag = img ? '<img src="'+img+'" onerror="this.style.display=\'none\'">' : '<div class="camp-creative-ph">🎬</div>';
+      var playBadge = vid ? '<div class="camp-creative-play">▶</div>' : '';
+      var thumbHtml = link ? ('<a href="'+link+'" target="_blank" rel="noopener">'+imgTag+playBadge+'</a>') : imgTag;
       return '<div class="camp-creative-card">'
-        + (img ? '<img src="'+img+'" onerror="this.style.display=\'none\'">' : '<div class="camp-creative-ph">🎬</div>')
+        + thumbHtml
         + '<div class="camp-creative-name" title="'+(ad.name||'')+'">'+(ad.name||'ไม่ระบุ')+'</div>'
         + '</div>';
     }).join('');
