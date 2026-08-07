@@ -259,6 +259,48 @@ footer b{color:var(--pink-dark)}
 .alert-group-title.warn{color:var(--gold)}
 .alert-group-title.raise{color:#4a63c9}
 .alert-group-title.good{color:var(--green)}
+
+/* ---- video analysis full rebuild + budget planner ---- */
+.vf-filterbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:18px}
+.vf-filterbar label{font-size:11.5px;color:var(--text-soft);font-weight:600;margin-right:6px}
+.vf-filterbar input[type=number]{width:80px;padding:7px 9px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:inherit}
+.vf-toggle-wrap{display:flex;align-items:center;gap:8px;margin-left:auto}
+.vf-switch{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0}
+.vf-switch input{opacity:0;width:0;height:0}
+.vf-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ddd;border-radius:22px;transition:.2s}
+.vf-slider:before{position:absolute;content:'';height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.vf-switch input:checked + .vf-slider{background:var(--pink)}
+.vf-switch input:checked + .vf-slider:before{transform:translateX(16px)}
+
+.vf-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+@media(max-width:900px){.vf-cards{grid-template-columns:repeat(2,1fr)}}
+.vf-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.vf-card .lbl{font-size:11.5px;color:var(--text-soft);font-weight:600;margin-bottom:6px}
+.vf-card .val{font-family:'Prompt',sans-serif;font-size:22px;font-weight:800;color:var(--text)}
+.vf-card .sub{font-size:11px;color:var(--text-soft);margin-top:4px}
+.vf-banner{background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:12px 18px;font-size:13px;font-weight:700;color:#065f46;margin-bottom:16px;cursor:pointer}
+.vf-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+@media(max-width:900px){.vf-mini{grid-template-columns:repeat(2,1fr)}}
+.vf-mini-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 16px;text-align:center}
+.vf-mini-card .val{font-family:'Prompt',sans-serif;font-size:20px;font-weight:800;color:var(--pink-dark)}
+.vf-mini-card .lbl{font-size:11px;color:var(--text-soft);margin-top:3px;font-weight:600}
+.vf-quad-wrap{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:18px}
+.vf-quad-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:14px;color:var(--pink-dark);margin-bottom:4px}
+.vf-quad-sub{font-size:11.5px;color:var(--text-soft);margin-bottom:12px}
+.vf-quad-flex{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.vf-quad-legend{min-width:200px;font-size:11.5px;line-height:1.9;color:var(--text)}
+.vf-quad-legend b{display:block;margin:6px 0 2px;font-size:11px;color:var(--text-soft);text-transform:uppercase}
+
+.vf-tbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1400px}
+.vf-tbl th{text-align:right;padding:8px 10px;background:var(--pink-pale);color:var(--pink-dark);font-weight:700;font-size:10.5px;text-transform:uppercase;white-space:nowrap}
+.vf-tbl th:first-child{text-align:left}
+.vf-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;font-size:12px}
+.vf-tbl td:first-child{text-align:left}
+.vf-name-cell{display:flex;align-items:center;gap:8px;max-width:220px}
+.vf-thumb{width:38px;height:38px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--pink-pale)}
+.vf-thumb-ph{width:38px;height:38px;border-radius:6px;flex-shrink:0;background:var(--pink-pale);display:flex;align-items:center;justify-content:center}
+.vf-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.vf-score-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-weight:800;font-size:11px}
 </style>
 </head>
 <body>
@@ -665,9 +707,9 @@ function aggByCampaign(rows){
   var map = {};
   rows.forEach(function(r){
     var c = r.campaign || 'ไม่ระบุแคมเปญ';
-    if(!map[c]) map[c] = {campaign:c, spend:0, impressions:0, clicks:0, purchases:0, revenue:0};
+    if(!map[c]) map[c] = {campaign:c, spend:0, impressions:0, clicks:0, purchases:0, revenue:0, conversations:0};
     map[c].spend += r.spend; map[c].impressions += r.impressions; map[c].clicks += (r.clicks||0);
-    map[c].purchases += r.purchases; map[c].revenue += r.revenue;
+    map[c].purchases += r.purchases; map[c].revenue += r.revenue; map[c].conversations += (r.conversations||0);
   });
   return Object.keys(map).map(function(k){ return map[k]; });
 }
@@ -767,17 +809,124 @@ function adsDecision(rt, ry, r3, r7){
   if(rt !== null && r7 !== null && rt < r7 * 0.75) return {cls:'warn', icon:'⚠️', label:'ลดงบ + ทดสอบ'};
   return {cls:'hold', icon:'👁️', label:'คงงบเดิม + เฝ้าดู'};
 }
+
+function aiAdsBudgetPlannerHtml(){
+  var maps = periodRoasMap();
+  function totalsOf(map){
+    var t = {spend:0, revenue:0};
+    Object.keys(map).forEach(function(k){ t.spend += map[k].spend; t.revenue += map[k].revenue; });
+    return t;
+  }
+  var tt = totalsOf(maps.today), ty = totalsOf(maps.y), t3 = totalsOf(maps.d3), t7 = totalsOf(maps.d7);
+  var rT = tt.spend>0 ? tt.revenue/tt.spend : 0;
+  var rY = ty.spend>0 ? ty.revenue/ty.spend : 0;
+  var r3v = t3.spend>0 ? t3.revenue/t3.spend : 0;
+  var r7v = t7.spend>0 ? t7.revenue/t7.spend : 0;
+  function grade(r){
+    if(r>=3) return '#f59e0b';
+    if(r>=2) return '#22c55e';
+    if(r>=1.5) return '#0ea5e9';
+    if(r>=1) return '#64748b';
+    return '#ef4444';
+  }
+  var cards = [
+    {label:'วันนี้ ROAS', val: tt.spend>0? rT.toFixed(2)+'x':'—', sub:'Spend '+fmtMoney(tt.spend), col:grade(rT)},
+    {label:'เมื่อวาน ROAS', val: rY.toFixed(2)+'x', sub:'Spend '+fmtMoney(ty.spend), col:grade(rY)},
+    {label:'3 วัน ROAS', val: r3v.toFixed(2)+'x', sub:'Spend '+fmtMoney(t3.spend), col:grade(r3v)},
+    {label:'7 วัน ROAS', val: r7v.toFixed(2)+'x', sub: r7v>=2 ? '✅ บรรลุ Target' : '⚠️ ต่ำกว่า 2x', col:grade(r7v)}
+  ];
+  var cardsHtml = cards.map(function(c){
+    return '<div style="flex:1;min-width:130px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 14px">'
+      + '<div style="font-size:11px;color:var(--text-soft);font-weight:600">'+c.label+'</div>'
+      + '<div style="font-family:Prompt,sans-serif;font-size:18px;font-weight:800;color:'+c.col+'">'+c.val+'</div>'
+      + '<div style="font-size:10.5px;color:var(--text-soft)">'+c.sub+'</div></div>';
+  }).join('');
+  var defaultBudget = ty.spend>0 ? Math.round(ty.spend) : '';
+  return '<div class="fx-panel" style="background:linear-gradient(135deg,#fff0f6,#fff);border:1.5px solid var(--pink-light);padding:18px 20px;margin-bottom:20px">'
+    + '<div style="font-size:14px;font-weight:800;color:var(--pink-dark);margin-bottom:2px">💰 วางแผนงบวันนี้</div>'
+    + '<div style="font-size:11.5px;color:var(--text-soft);margin-bottom:14px">AI จัดงบตาม ROAS วันนี้/3วัน/7วัน — Target 2+ เพิ่มงบ, &lt;1 ปิด</div>'
+    + '<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">' + cardsHtml + '</div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">'
+    +   '<div style="flex:1;min-width:110px"><label style="display:block;font-size:11px;color:var(--pink-dark);font-weight:700;margin-bottom:4px">งบวันนี้ (฿)</label><input id="spPlanBudget" type="number" placeholder="เช่น 20000" value="'+defaultBudget+'" style="width:100%;box-sizing:border-box;border:1.5px solid var(--pink-light);border-radius:8px;padding:8px 10px;font-size:13px"></div>'
+    +   '<div style="flex:1;min-width:100px"><label style="display:block;font-size:11px;color:var(--pink-dark);font-weight:700;margin-bottom:4px">Target ROAS (x)</label><input id="spPlanTarget" type="number" step="0.1" value="2.0" style="width:100%;box-sizing:border-box;border:1.5px solid var(--pink-light);border-radius:8px;padding:8px 10px;font-size:13px"></div>'
+    +   '<div style="flex:1;min-width:105px"><label style="display:block;font-size:11px;color:var(--pink-dark);font-weight:700;margin-bottom:4px">ต้นทุน/การซื้อ ≤ (฿)</label><input id="spPlanCpp" type="number" placeholder="เช่น 500" style="width:100%;box-sizing:border-box;border:1.5px solid var(--pink-light);border-radius:8px;padding:8px 10px;font-size:13px"></div>'
+    +   '<div style="flex:1;min-width:105px"><label style="display:block;font-size:11px;color:var(--pink-dark);font-weight:700;margin-bottom:4px">ต้นทุน/สนทนา ≤ (฿)</label><input id="spPlanConv" type="number" placeholder="เช่น 80" style="width:100%;box-sizing:border-box;border:1.5px solid var(--pink-light);border-radius:8px;padding:8px 10px;font-size:13px"></div>'
+    +   '<button id="spPlanCalcBtn" style="background:var(--pink-dark);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:12.5px;font-weight:700;cursor:pointer">🤖 คำนวณ</button>'
+    + '</div>'
+    + '<div id="spPlanResult" style="margin-top:14px"></div>'
+    + '</div>';
+}
+
+function spCalcBudget(){
+  var resEl = document.getElementById('spPlanResult');
+  var totalBudget = parseFloat(document.getElementById('spPlanBudget').value)||0;
+  var targetCPP = parseFloat(document.getElementById('spPlanCpp').value)||0;
+  var targetConv = parseFloat(document.getElementById('spPlanConv').value)||0;
+  if(totalBudget<=0){ resEl.innerHTML = '<div style="color:#dc2626;font-size:12px">กรุณาใส่งบวันนี้</div>'; return; }
+  var rows = last30Rows();
+  var camps = aggByCampaign(rows);
+  var maps = periodRoasMap();
+  function r(map,name){ var c=map[name]; return c&&c.spend>0 ? c.revenue/c.spend : 0; }
+  function has(map,name){ return !!map[name] && map[name].spend>0; }
+  var campCPPMap = {}, campConvMap = {};
+  camps.forEach(function(c){
+    campCPPMap[c.campaign] = c.purchases>0 ? c.spend/c.purchases : 0;
+    campConvMap[c.campaign] = c.conversations>0 ? c.spend/c.conversations : 0;
+  });
+  var scored = camps.map(function(c){
+    var name = c.campaign;
+    var r7 = r(maps.d7,name), r3 = r(maps.d3,name), r1 = r(maps.y,name), rT = r(maps.today,name);
+    var hasR3 = has(maps.d3,name), hasR1 = has(maps.y,name), hasT = has(maps.today,name);
+    var sumW=0,sumR=0;
+    if(r7>0){ sumR+=r7*1; sumW+=1; }
+    if(hasR3 && r3>0){ sumR+=r3*2; sumW+=2; }
+    if(hasR1 && r1>0){ sumR+=r1*3; sumW+=3; }
+    if(hasT && rT>0){ sumR+=rT*4; sumW+=4; }
+    var avg = sumW>0 ? sumR/sumW : r7;
+    if(avg<1) return Object.assign({},c,{close:true, weight:0, avg:avg});
+    var cppOK = true, convOK = true;
+    if(targetCPP>0 && campCPPMap[name]>0 && campCPPMap[name]>targetCPP) cppOK=false;
+    if(targetConv>0 && campConvMap[name]>0 && campConvMap[name]>targetConv) convOK=false;
+    var adjW = Math.pow(avg,1.5);
+    if(!cppOK) adjW *= 0.4;
+    if(!convOK) adjW *= 0.5;
+    return Object.assign({},c,{close:false, weight:adjW, avg:avg, cppOK:cppOK, convOK:convOK});
+  });
+  var active = scored.filter(function(c){ return !c.close && c.weight>0; });
+  var closing = scored.filter(function(c){ return c.close; });
+  var sumWeight = active.reduce(function(s,c){return s+c.weight;},0);
+  active.forEach(function(c){ c._alloc = sumWeight>0 ? totalBudget * (c.weight/sumWeight) : 0; });
+  active.sort(function(a,b){ return b._alloc - a._alloc; });
+  var html = '';
+  if(active.length){
+    html += '<div style="font-size:11.5px;font-weight:700;color:var(--text-soft);margin-bottom:8px">✅ แนะนำจัดงบ (รวม '+fmtMoney(totalBudget)+')</div>';
+    html += '<div class="stop-list" style="margin-bottom:14px">' + active.map(function(c){
+      var pct = sumWeight>0 ? (c.weight/sumWeight*100) : 0;
+      return '<div class="stop-item" style="background:#f0fdf4;border-color:#b9ecd3"><span>'+c.campaign+' <b style="color:var(--text-soft);font-weight:400">(ROAS avg '+c.avg.toFixed(2)+'x'+(c.cppOK===false?' · เกิน CPP':'')+(c.convOK===false?' · เกิน CPConv':'')+')</b></span><b>'+fmtMoney(c._alloc)+' ('+pct.toFixed(0)+'%)</b></div>';
+    }).join('') + '</div>';
+  }
+  if(closing.length){
+    html += '<div style="font-size:11.5px;font-weight:700;color:var(--red);margin-bottom:8px">🛑 ควรปิด (ROAS เฉลี่ย &lt; 1)</div>';
+    html += '<div class="stop-list">' + closing.map(function(c){
+      return '<div class="stop-item"><span>'+c.campaign+'</span><b>ROAS avg '+c.avg.toFixed(2)+'x</b></div>';
+    }).join('') + '</div>';
+  }
+  if(!active.length && !closing.length){ html = '<div class="fx-empty">ยังไม่มีข้อมูลแคมเปญเพียงพอ</div>'; }
+  resEl.innerHTML = html;
+}
+
 function renderAIAds(){
   var el = document.getElementById('aiAdsBody');
   var rows = last30Rows();
   if(rows.length === 0){ el.innerHTML = '<div class="fx-empty">ยังไม่มีข้อมูลเพียงพอสำหรับวิเคราะห์</div>'; return; }
+  var plannerHtml = aiAdsBudgetPlannerHtml();
   var maps = periodRoasMap();
   var campNames = Object.keys(maps.d7).sort(function(a,b){
     var ra = roasOf(maps[adsSortPeriod], a); var rb = roasOf(maps[adsSortPeriod], b);
     ra = ra===null? 999: ra; rb = rb===null? 999: rb;
     return ra - rb;
   });
-  if(campNames.length === 0){ el.innerHTML = '<div class="fx-empty">ไม่มีแคมเปญที่ใช้งบในช่วงนี้</div>'; return; }
+  if(campNames.length === 0){ el.innerHTML = plannerHtml + '<div class="fx-empty">ไม่มีแคมเปญที่ใช้งบในช่วงนี้</div>'; bindAiAdsPlanner(); return; }
 
   var periodPills = [['today','วันนี้'],['y','1 วัน'],['d3','3 วัน'],['d7','7 วัน']];
   var controlsHtml = '<div class="fx-controls"><span class="ctrl-label">เรียงตามช่วง:</span>'
@@ -802,7 +951,7 @@ function renderAIAds(){
       + '<td><span class="advice-chip '+dec.cls+'">'+dec.icon+' '+dec.label+'</span></td></tr>';
   }).join('');
 
-  el.innerHTML = controlsHtml
+  el.innerHTML = plannerHtml + controlsHtml
     + '<div style="overflow-x:auto"><table class="ads-tbl"><thead><tr>'
     + '<th>แคมเปญ</th><th class="num">วันนี้</th><th class="num">1 วัน</th><th class="num">3 วัน</th><th class="num">7 วัน</th>'
     + '<th class="num">Spend 1D</th><th class="num">Spend 7D</th><th class="num">งบแนะนำ</th><th>คำแนะนำ AI</th>'
@@ -811,6 +960,12 @@ function renderAIAds(){
   document.querySelectorAll('.ads-period').forEach(function(b){
     b.addEventListener('click', function(){ adsSortPeriod = this.dataset.period; renderAIAds(); });
   });
+  bindAiAdsPlanner();
+}
+
+function bindAiAdsPlanner(){
+  var btn = document.getElementById('spPlanCalcBtn');
+  if(btn) btn.addEventListener('click', spCalcBudget);
 }
 
 var rankingRangeDays = 30;
@@ -936,30 +1091,258 @@ function renderAlert(){
   }
 }
 
-function renderVideo(){
-  var el = document.getElementById('videoBody');
+
+var vfAllData = [];
+
+function vfFmtN(v){ return Math.round(v).toLocaleString(); }
+function vfMed(arr){
+  var a = arr.filter(function(x){return isFinite(x);}).slice().sort(function(x,y){return x-y;});
+  if(!a.length) return 0;
+  var mid = Math.floor(a.length/2);
+  return a.length%2 ? a[mid] : (a[mid-1]+a[mid])/2;
+}
+function vfGetA(arr, type){
+  if(!arr) return 0;
+  var f = arr.find(function(a){ return a.action_type === type; });
+  return f ? parseFloat(f.value) : 0;
+}
+function vfFetchInsights(){
   var now = new Date();
   var since = new Date(now); since.setDate(since.getDate()-29);
-  var fields = 'campaign_name,spend,impressions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions,video_play_actions';
+  var fields = 'ad_id,ad_name,spend,impressions,actions,video_play_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions';
   var timeRange = encodeURIComponent(JSON.stringify({since:toYMD(since), until:toYMD(now)}));
-  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields + '&level=campaign&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
-  fetch(url).then(function(r){ return r.json(); }).then(function(d){
-    if(d.error || !d.data || d.data.length === 0){ el.innerHTML = '<div class="fx-empty">ไม่มีข้อมูลวิดีโอในช่วง 30 วันล่าสุด (อาจไม่มีแคมเปญวิดีโอที่รันอยู่)</div>'; return; }
-    function sumAction(arr){ var s=0; (arr||[]).forEach(function(a){ s += parseFloat(a.value)||0; }); return s; }
-    var rows = d.data.map(function(c){
-      var plays = sumAction(c.video_play_actions), p25 = sumAction(c.video_p25_watched_actions), p50 = sumAction(c.video_p50_watched_actions), p75 = sumAction(c.video_p75_watched_actions), p100 = sumAction(c.video_p100_watched_actions);
-      var impr = parseInt(c.impressions)||0, spend = parseFloat(c.spend)||0;
-      var hookRate = impr>0 ? (p25/impr*100) : 0, r50 = plays>0 ? (p50/plays*100) : 0, r75 = plays>0 ? (p75/plays*100) : 0, completeRate = plays>0 ? (p100/plays*100) : 0;
-      return {name:c.campaign_name||'ไม่ระบุ', spend:spend, impr:impr, plays:plays, hookRate:hookRate, r50:r50, r75:r75, completeRate:completeRate};
-    }).filter(function(r){ return r.plays > 0; }).sort(function(a,b){ return b.hookRate - a.hookRate; });
-    if(rows.length === 0){ el.innerHTML = '<div class="fx-empty">ไม่พบแคมเปญที่มีการเล่นวิดีโอในช่วงนี้</div>'; return; }
-    el.innerHTML = '<div style="overflow-x:auto"><table class="video-tbl"><thead><tr><th>แคมเปญ</th><th>Spend</th><th>ยอดเล่น</th><th>Hook Rate (25%)</th><th>ดูถึง 50%</th><th>ดูถึง 75%</th><th>ดูจบ (100%)</th></tr></thead><tbody>'
-      + rows.map(function(r){
-          return '<tr><td>'+r.name+'</td><td>'+fmtMoney(r.spend)+'</td><td>'+fmtInt(r.plays)+'</td>'
-            + '<td><div style="display:flex;align-items:center;gap:8px"><div class="hook-bar" style="flex:1"><div class="hook-bar-fill" style="width:'+Math.min(100,r.hookRate).toFixed(0)+'%"></div></div><span>'+r.hookRate.toFixed(1)+'%</span></div></td>'
-            + '<td>'+r.r50.toFixed(1)+'%</td><td>'+r.r75.toFixed(1)+'%</td><td>'+r.completeRate.toFixed(1)+'%</td></tr>';
-        }).join('') + '</tbody></table></div>';
-  }).catch(function(err){ el.innerHTML = '<div class="fx-empty">โหลดข้อมูลวิดีโอไม่สำเร็จ: '+err.message+'</div>'; });
+  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields + '&level=ad&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
+  return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+}
+function vfFetchCreatives(){
+  var url = FB_API + ACCOUNT_ID + '/ads?fields=id,name,created_time,creative{thumbnail_url}&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
+  return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+}
+function vfMerge(ins, crvs){
+  var cm = {};
+  crvs.forEach(function(c){ cm[c.id] = c; });
+  var priority = ['omni_purchase','purchase','offsite_conversion.fb_pixel_purchase','lead','onsite_conversion.lead_grouped','link_click'];
+  return ins.map(function(row){
+    var cr = cm[row.ad_id] || {};
+    var results = 0;
+    if(row.actions){
+      for(var p=0;p<priority.length;p++){
+        var rv = vfGetA(row.actions, priority[p]);
+        if(rv>0){ results = rv; break; }
+      }
+    }
+    var created = cr.created_time ? new Date(cr.created_time) : null;
+    var days = created ? Math.floor((Date.now()-created.getTime())/86400000) : 0;
+    return {
+      adId: row.ad_id,
+      name: (cr.name || row.ad_name || 'ไม่ระบุ').substring(0,60),
+      thumb: (cr.creative && cr.creative.thumbnail_url) ? cr.creative.thumbnail_url : '',
+      spend: parseFloat(row.spend)||0,
+      imp: parseInt(row.impressions)||0,
+      v3s: vfGetA(row.video_play_actions, 'video_view'),
+      p25: vfGetA(row.video_p25_watched_actions, 'video_view'),
+      p50: vfGetA(row.video_p50_watched_actions, 'video_view'),
+      p75: vfGetA(row.video_p75_watched_actions, 'video_view'),
+      p95: vfGetA(row.video_p95_watched_actions, 'video_view'),
+      results: results, days: days,
+      score:0, verdict:'', vcolor:'', quad:'', qx:0, qy:0
+    };
+  });
+}
+function vfCalc(data){
+  if(!data.length) return;
+  data.forEach(function(d){
+    d.hookRate = d.imp>0 ? d.v3s/d.imp : 0;
+    d.convRate = d.imp>0 ? d.results/d.imp : 0;
+    d.cpa = d.results>0 ? d.spend/d.results : 0;
+    d.leadRate = d.v3s>0 ? d.results/d.v3s : 0;
+    d.slideRate = d.imp>0 ? d.results/d.imp : 0;
+  });
+  var avgH = data.reduce(function(s,d){return s+d.hookRate;},0)/data.length;
+  var avgC = data.reduce(function(s,d){return s+d.convRate;},0)/data.length;
+  var medH = vfMed(data.map(function(d){return d.hookRate;}));
+  data.forEach(function(d){
+    d.qx = avgH>0 ? d.hookRate/avgH : 1;
+    d.qy = avgC>0 ? d.convRate/avgC : 1;
+    var hS = Math.min(50, medH>0 ? d.hookRate/medH*35 : 0);
+    var cS = Math.min(40, avgC>0 ? d.convRate/avgC*30 : 0);
+    var holdB = Math.min(10, d.v3s>0 ? d.p50/d.v3s*10 : 0);
+    d.score = Math.round(Math.min(100, hS+cS+holdB));
+    if(d.qx>=1 && d.qy>=1){ d.verdict='พีสูงแล้วว่าดี'; d.vcolor='#10b981'; d.quad='ขยายผล'; }
+    else if(d.qx>=1){ d.verdict='ตามเกณฑ์บัญชี'; d.vcolor='#f59e0b'; d.quad='แก้ CTA'; }
+    else if(d.qy>=1){ d.verdict='ตามเกณฑ์บัญชี'; d.vcolor='#3b82f6'; d.quad='แก้ฮุก'; }
+    else{ d.verdict='เสียคนดูตั้งแต่ฮุก'; d.vcolor='#f87171'; d.quad='พิจารณาปิด'; }
+  });
+}
+function vfFilteredData(){
+  var showLowEl = document.getElementById('vfShowLow');
+  var showLow = showLowEl && showLowEl.checked;
+  var d = vfAllData.slice();
+  if(!showLow){
+    var ms = parseFloat((document.getElementById('vfMinSpend')||{}).value)||0;
+    var mi = parseFloat((document.getElementById('vfMinImpr')||{}).value)||0;
+    d = d.filter(function(x){ return x.spend>=ms && x.imp>=mi; });
+  }
+  return d;
+}
+function vfRenderFiltered(){
+  var d = vfFilteredData();
+  vfCards(d); vfBanner(d); vfMini(d); vfQuad(d); vfTbl(d);
+}
+function vfCards(d){
+  var sp = d.reduce(function(s,x){return s+x.spend;},0);
+  var rs = d.reduce(function(s,x){return s+x.results;},0);
+  var medH = vfMed(d.map(function(x){return x.hookRate;}));
+  var cards = [
+    {icon:'🔥', label:'ยอดใช้จ่ายวีดีโอ', val:fmtMoney(sp), sub:'รวมทุกวีดีโอที่เลือก'},
+    {icon:'🎯', label:'ค่ากลางอัตราฮุก', val:(medH*100).toFixed(1)+'%', sub:'จาก '+d.length+' วีดีโอที่ผ่านเกณฑ์'},
+    {icon:'📈', label:'ผลลัพธ์', val:vfFmtN(rs), sub:'ต้นทุน/ผลลัพธ์: '+(rs>0?fmtMoney(sp/rs):'—')},
+    {icon:'🎬', label:'วีดีโอที่วิเคราะห์แล้ว', val:d.length, sub:'ข้อมูลไม่พอ '+(vfAllData.length-d.length)+' ตัว'}
+  ];
+  document.getElementById('vfCards').innerHTML = cards.map(function(c){
+    return '<div class="vf-card"><div class="lbl">'+c.icon+' '+c.label+'</div><div class="val">'+c.val+'</div><div class="sub">'+c.sub+'</div></div>';
+  }).join('');
+}
+function vfBanner(d){
+  var sc = d.filter(function(x){return x.quad==='ขยายผล';});
+  var el = document.getElementById('vfBanner');
+  if(sc.length){
+    el.innerHTML = '<div class="vf-banner" id="vfBannerBtn">📈 วีดีโอที่พีสูงแล้วว่าดี '+sc.length+' ตัว — ขยายผลต่อได้เลย</div>';
+    var b = document.getElementById('vfBannerBtn');
+    if(b) b.addEventListener('click', function(){ var t=document.getElementById('vfTblWrap'); if(t) t.scrollIntoView({behavior:'smooth'}); });
+  } else el.innerHTML = '';
+}
+function vfMini(d){
+  var sc = d.filter(function(x){return x.quad==='ขยายผล';}).length;
+  var wi = d.filter(function(x){return x.score>=55;}).length;
+  var t = d.length||1;
+  var items = [
+    {icon:'🚀', label:'เปิดตัวใหม่', val:d.length},
+    {icon:'📊', label:'ขยายแล้ว', val:sc},
+    {icon:'🏆', label:'ตัวชนะ', val:wi},
+    {icon:'🎯', label:'อัตราชนะ', val: wi+'/'+t+' · '+Math.round(wi/t*100)+'%'}
+  ];
+  document.getElementById('vfMini').innerHTML = items.map(function(c){
+    return '<div class="vf-mini-card"><div class="val">'+c.val+'</div><div class="lbl">'+c.icon+' '+c.label+'</div></div>';
+  }).join('');
+}
+function vfQuad(d){
+  var wrap = document.getElementById('vfQuadWrap');
+  if(!d.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  var canvas = document.getElementById('vfCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height, pad = {l:50,r:20,t:16,b:40};
+  var pW = W-pad.l-pad.r, pH = H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  var mn=0.25, mx=3;
+  function toX(v){ return pad.l + (Math.min(mx,Math.max(mn,v))-mn)/(mx-mn)*pW; }
+  function toY(v){ return pad.t + pH - (Math.min(mx,Math.max(mn,v))-mn)/(mx-mn)*pH; }
+  var px = toX(1), py = toY(1);
+  ctx.fillStyle='rgba(16,185,129,.10)'; ctx.fillRect(px,pad.t,W-px-pad.r,py-pad.t);
+  ctx.fillStyle='rgba(59,130,246,.10)'; ctx.fillRect(pad.l,pad.t,px-pad.l,py-pad.t);
+  ctx.fillStyle='rgba(245,158,11,.10)'; ctx.fillRect(px,py,W-px-pad.r,H-py-pad.b);
+  ctx.fillStyle='rgba(248,113,113,.10)'; ctx.fillRect(pad.l,py,px-pad.l,H-py-pad.b);
+  ctx.strokeStyle='#ccc'; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(px,pad.t); ctx.lineTo(px,pad.t+pH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l,py); ctx.lineTo(pad.l+pW,py); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font='10px sans-serif'; ctx.fillStyle='#999';
+  [0.25,0.95,1.65,3].forEach(function(v){
+    ctx.textAlign='center'; ctx.fillText(v, toX(v), H-pad.b+14);
+    ctx.textAlign='right'; ctx.fillText(v, pad.l-6, toY(v)+3);
+  });
+  ctx.font='11px sans-serif'; ctx.fillStyle='#888'; ctx.textAlign='center';
+  ctx.fillText('อัตราฮุกเทียบค่าปกติของบัญชี (เท่า)', pad.l+pW/2, H-4);
+  ctx.save(); ctx.translate(12,pad.t+pH/2); ctx.rotate(-Math.PI/2); ctx.fillText('คอนเวอร์ชันเทียบค่าปกติ (เท่า)',0,0); ctx.restore();
+  ctx.font='10px sans-serif';
+  ctx.fillStyle='#065f46'; ctx.textAlign='left'; ctx.fillText('ขยายผล', px+6, pad.t+12);
+  ctx.fillStyle='#1e40af'; ctx.fillText('แก้ฮุก', pad.l+6, pad.t+12);
+  ctx.fillStyle='#92400e'; ctx.fillText('แก้ CTA', px+6, H-pad.b-6);
+  ctx.fillStyle='#991b1b'; ctx.fillText('พิจารณาปิด', pad.l+6, H-pad.b-6);
+  var maxSp = Math.max.apply(null, d.map(function(x){return x.spend||1;}));
+  var top = d.slice().sort(function(a,b){return b.score-a.score;}).slice(0,60);
+  top.forEach(function(p,pi){
+    var ang = pi*2.399963;
+    var rj = Math.sqrt(pi+1)*6;
+    var jx = Math.cos(ang)*rj, jy = Math.sin(ang)*rj;
+    var x = toX(p.qx)+jx, y = toY(p.qy)+jy;
+    var r = Math.max(2, Math.sqrt((p.spend||1)/maxSp)*10);
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = p.vcolor; ctx.globalAlpha=0.75; ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+  });
+  document.getElementById('vfLegend').innerHTML =
+    '<b>การกระจายผลตัดสิน</b>'
+    + '<div>📈 '+d.filter(function(x){return x.quad==='ขยายผล';}).length+' ขยายผล — ฮุกดี คอนเวอร์ชันดี</div>'
+    + '<div>✓ '+d.filter(function(x){return x.quad==='แก้ CTA';}).length+' แก้ CTA — ฮุกดี คอนเวอร์ชันอ่อน</div>'
+    + '<div>✓ '+d.filter(function(x){return x.quad==='แก้ฮุก';}).length+' แก้ฮุก — คอนเวอร์ชันดี ฮุกอ่อน</div>'
+    + '<div>✗ '+d.filter(function(x){return x.quad==='พิจารณาปิด';}).length+' พิจารณาปิด — อ่อนทั้งฮุกและคอนเวอร์ชัน</div>';
+}
+function vfTbl(d){
+  var wrap = document.getElementById('vfTblWrap');
+  if(!d.length){ wrap.innerHTML = '<div class="fx-empty">ไม่พบวีดีโอที่ผ่านเกณฑ์</div>'; return; }
+  var srt = d.slice().sort(function(a,b){return b.score-a.score;});
+  var hdrs = ['ครีเอทีฟ','วันรัน','คะแนน','ผลประเมิน','ยอดใช้จ่าย','อิมเพรสชัน','ผู้ชม 3 วิ','อัตราฮุก %','25% (ผู้ชม)','50% (ผู้ชม)','75% (ผู้ชม)','95% (ผู้ชม)','อัตราสไลด์/อิมเพรสชัน','สไลด์/ผู้ชม','ต้นทุน/ผลลัพธ์'];
+  var html = '<table class="vf-tbl"><thead><tr>' + hdrs.map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead><tbody>';
+  srt.forEach(function(d0){
+    var scColor = d0.score>=55?'#10b981':(d0.score>=45?'#f59e0b':'#f87171');
+    var p25 = d0.v3s>0 ? (d0.p25/d0.v3s*100).toFixed(1)+'%' : '—';
+    var p50 = d0.v3s>0 ? (d0.p50/d0.v3s*100).toFixed(1)+'%' : '—';
+    var p75 = d0.v3s>0 ? (d0.p75/d0.v3s*100).toFixed(1)+'%' : '—';
+    var p95 = d0.v3s>0 ? (d0.p95/d0.v3s*100).toFixed(1)+'%' : '—';
+    var hook = (d0.hookRate*100).toFixed(1)+'% '+d0.qx.toFixed(1)+'×';
+    var slide = (d0.slideRate*100).toFixed(2)+'%';
+    var lead = (d0.leadRate*100).toFixed(2)+'%';
+    var cpa = d0.cpa>0 ? fmtMoney(d0.cpa) : '—';
+    var qIcon = d0.quad==='ขยายผล' ? '📈 ' : (d0.quad==='พิจารณาปิด' ? '✗ ' : '✓ ');
+    var thumbHtml = d0.thumb ? '<img class="vf-thumb" src="'+d0.thumb+'" onerror="this.style.display=\'none\'">' : '<div class="vf-thumb-ph">🎬</div>';
+    html += '<tr><td><div class="vf-name-cell">'+thumbHtml+'<span class="vf-name-text" title="'+d0.name+'">'+d0.name+'</span></div></td>'
+      + '<td>'+d0.days+'</td>'
+      + '<td><span class="vf-score-badge" style="background:'+scColor+'">'+d0.score+'</span></td>'
+      + '<td style="color:'+d0.vcolor+';font-weight:700">'+qIcon+d0.verdict+'</td>'
+      + '<td>'+(d0.spend>0?fmtMoney(d0.spend):'—')+'</td>'
+      + '<td>'+fmtInt(d0.imp)+'</td>'
+      + '<td>'+fmtInt(d0.v3s)+'</td>'
+      + '<td>'+hook+'</td>'
+      + '<td>'+p25+'</td><td>'+p50+'</td><td>'+p75+'</td><td>'+p95+'</td>'
+      + '<td>'+slide+'</td><td>'+lead+'</td><td>'+cpa+'</td></tr>';
+  });
+  wrap.innerHTML = html + '</tbody></table>';
+}
+function renderVideo(){
+  var el = document.getElementById('videoBody');
+  el.innerHTML = ''
+    + '<div class="vf-filterbar">'
+    +   '<span><label>ยอดใช้จ่ายขั้นต่ำ (฿)</label><input type="number" id="vfMinSpend" value="1000"></span>'
+    +   '<span><label>อิมเพรสชันขั้นต่ำ</label><input type="number" id="vfMinImpr" value="1000"></span>'
+    +   '<div class="vf-toggle-wrap"><label class="vf-switch"><input type="checkbox" id="vfShowLow"><span class="vf-slider"></span></label><span style="font-size:12px;color:var(--text-soft)">แสดงวีดีโอที่ข้อมูลยังน้อย</span></div>'
+    + '</div>'
+    + '<div id="vfCards" class="vf-cards"><div class="fx-empty" style="grid-column:1/-1">⏳ กำลังโหลดข้อมูลวิดีโอ...</div></div>'
+    + '<div id="vfBanner"></div>'
+    + '<div id="vfMini" class="vf-mini"></div>'
+    + '<div id="vfQuadWrap" class="vf-quad-wrap" style="display:none">'
+    +   '<div class="vf-quad-title">ควอดรันต์ฮุก × คอนเวอร์ชัน</div>'
+    +   '<div class="vf-quad-sub">แต่ละจุดคือหนึ่งวีดีโอ ขนาดจุด = งบที่ใช้ &middot; คลิกจุดเพื่อไปยังแถวนั้น</div>'
+    +   '<div class="vf-quad-flex">'
+    +     '<canvas id="vfCanvas" width="560" height="420"></canvas>'
+    +     '<div class="vf-quad-legend" id="vfLegend"></div>'
+    +   '</div>'
+    + '</div>'
+    + '<div id="vfTblWrap" style="overflow-x:auto"></div>';
+
+  document.getElementById('vfMinSpend').addEventListener('change', vfRenderFiltered);
+  document.getElementById('vfMinImpr').addEventListener('change', vfRenderFiltered);
+  document.getElementById('vfShowLow').addEventListener('change', vfRenderFiltered);
+
+  Promise.all([vfFetchInsights(), vfFetchCreatives()]).then(function(res){
+    var merged = vfMerge(res[0], res[1]);
+    vfAllData = merged.filter(function(d){ return d.v3s > 0; });
+    vfCalc(vfAllData);
+    vfRenderFiltered();
+  }).catch(function(err){
+    el.innerHTML += '<div class="fx-empty">โหลดข้อมูลวิดีโอไม่สำเร็จ: '+err.message+'</div>';
+  });
 }
 
 var VIEW_RENDERERS = {
