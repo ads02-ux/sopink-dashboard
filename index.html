@@ -301,6 +301,44 @@ footer b{color:var(--pink-dark)}
 .vf-thumb-ph{width:38px;height:38px;border-radius:6px;flex-shrink:0;background:var(--pink-pale);display:flex;align-items:center;justify-content:center}
 .vf-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .vf-score-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-weight:800;font-size:11px}
+
+/* ---- campaign detail drawer ---- */
+.camp-tbl-row{cursor:pointer}
+.camp-tbl-row:hover td{background:var(--pink-pale)}
+.camp-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300;opacity:0;visibility:hidden;transition:.2s}
+.camp-drawer-overlay.open{opacity:1;visibility:visible}
+.camp-drawer{position:fixed;top:0;right:0;bottom:0;width:460px;max-width:92vw;background:#fff;z-index:301;box-shadow:-8px 0 30px rgba(0,0,0,.15);transform:translateX(100%);transition:.25s ease;overflow-y:auto}
+.camp-drawer.open{transform:translateX(0)}
+.camp-drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:18px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;z-index:2}
+.camp-drawer-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:15px;color:var(--pink-dark);line-height:1.4}
+.camp-drawer-close{background:none;border:none;font-size:22px;color:var(--text-soft);cursor:pointer;line-height:1;padding:0 4px}
+.camp-drawer-body{padding:18px 20px}
+.camp-kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+.camp-kpi{background:var(--pink-pale);border-radius:12px;padding:12px 14px}
+.camp-kpi-label{font-size:11px;color:var(--text-soft);font-weight:600;margin-bottom:4px}
+.camp-kpi-val{font-family:'Prompt',sans-serif;font-size:18px;font-weight:800}
+.camp-chart-wrap{margin:16px 0}
+.camp-ai-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;color:var(--pink-dark);margin:16px 0 8px}
+.camp-ai-card{border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border)}
+.camp-ai-card.good{background:#eafbf3;border-color:#b9ecd3}
+.camp-ai-card.warn{background:#fff9e8;border-color:#ffe4a3}
+.camp-ai-card.crit{background:#fff0f0;border-color:#ffc9cc}
+.camp-ai-card.info{background:#eef2ff;border-color:#c7d2fe}
+.camp-ai-card-h{font-weight:700;font-size:12.5px;margin-bottom:3px}
+.camp-ai-card-p{font-size:12px;color:var(--text)}
+.camp-section-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;color:var(--pink-dark);margin:18px 0 8px}
+.camp-fetch-btn{width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--pink-light);background:var(--pink-pale);color:var(--pink-dark);font-weight:700;font-size:12.5px;cursor:pointer;margin-bottom:12px}
+.camp-fetch-btn:hover{background:#ffe9f2}
+.camp-creatives-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.camp-creative-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;text-align:center}
+.camp-creative-card img{width:100%;height:80px;object-fit:cover;display:block}
+.camp-creative-ph{width:100%;height:80px;display:flex;align-items:center;justify-content:center;background:var(--pink-pale);font-size:20px}
+.camp-creative-name{font-size:10px;padding:5px;color:var(--text-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.camp-ceo-btn{width:100%;padding:12px;border-radius:10px;border:none;background:var(--text);color:#fff;font-weight:700;font-size:13px;cursor:pointer;margin-top:20px}
+.camp-ceo-btn:hover{opacity:.85}
+.camp-ceo-box{margin-top:12px;background:var(--pink-pale);border-radius:12px;padding:14px}
+.camp-ceo-box pre{white-space:pre-wrap;font-family:inherit;font-size:12.5px;color:var(--text);margin-bottom:10px}
+.camp-ceo-copy{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--pink-dark);font-weight:700;font-size:12px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -423,6 +461,18 @@ footer b{color:var(--pink-dark)}
     </div>
   </div>
 
+  <div class="panel">
+      <h2>📋 รายการแคมเปญ <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(คลิกแถวเพื่อดูรายละเอียด)</span></h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>แคมเปญ</th><th class="num">Spend</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Purchases</th><th class="num">Revenue</th><th class="num">ROAS</th></tr>
+          </thead>
+          <tbody id="campaignTable"></tbody>
+        </table>
+      </div>
+    </div>
+
   <footer>Powered by <b>SO PINK</b> &middot; Ads Analytics Dashboard &middot; ข้อมูลจาก Facebook Marketing API</footer>
 
 </div><!-- /view-dashboard -->
@@ -510,6 +560,7 @@ function calcRow(ins){
   var spend = parseFloat(ins.spend) || 0;
   var clicks = parseInt(ins.clicks) || 0;
   var campaign = ins.campaign_name || 'ไม่ระบุแคมเปญ';
+  var campaignId = ins.campaign_id || '';
   var purchases = 0, conversations = 0;
   (ins.actions||[]).forEach(function(a){
     if(a.action_type === 'omni_purchase') purchases += parseFloat(a.value)||0;
@@ -525,6 +576,7 @@ function calcRow(ins){
   return {
     date: ins.date_start || '',
     campaign: campaign,
+    campaignId: campaignId,
     spend: spend,
     impressions: parseInt(ins.impressions) || 0,
     clicks: clicks,
@@ -553,7 +605,7 @@ function loadData(){
   var now = new Date();
   var since = new Date(now); since.setDate(since.getDate()-89);
   var sinceStr = toYMD(since), untilStr = toYMD(now);
-  var fields = 'campaign_name,adset_name,spend,impressions,clicks,actions,action_values';
+  var fields = 'campaign_id,campaign_name,adset_name,spend,impressions,clicks,actions,action_values';
   var timeRange = encodeURIComponent(JSON.stringify({since:sinceStr, until:untilStr}));
   var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields
     + '&level=adset&time_range=' + timeRange
@@ -667,6 +719,7 @@ function render(){
       scales:{ y:{ beginAtZero:true, ticks:{ callback:function(v){ return '฿'+v.toLocaleString(); } } } }
     }
   });
+  renderCampaignTable(start, end);
 }
 
 document.getElementById('filterBar').addEventListener('click', function(e){
@@ -707,9 +760,10 @@ function aggByCampaign(rows){
   var map = {};
   rows.forEach(function(r){
     var c = r.campaign || 'ไม่ระบุแคมเปญ';
-    if(!map[c]) map[c] = {campaign:c, spend:0, impressions:0, clicks:0, purchases:0, revenue:0, conversations:0};
+    if(!map[c]) map[c] = {campaign:c, campaignId:'', spend:0, impressions:0, clicks:0, purchases:0, revenue:0, conversations:0};
     map[c].spend += r.spend; map[c].impressions += r.impressions; map[c].clicks += (r.clicks||0);
     map[c].purchases += r.purchases; map[c].revenue += r.revenue; map[c].conversations += (r.conversations||0);
+    if(!map[c].campaignId && r.campaignId) map[c].campaignId = r.campaignId;
   });
   return Object.keys(map).map(function(k){ return map[k]; });
 }
@@ -1374,6 +1428,229 @@ var sbToggle = document.getElementById('sbToggle');
 if(sbToggle){
   sbToggle.addEventListener('click', function(){
     document.getElementById('sidebar').classList.toggle('open');
+  });
+}
+
+
+// ==== Campaign Detail Drawer ====
+var campDrawerCampaign = null;
+var campDrawerRangeDays = 7;
+var campChartInst = null;
+
+function renderCampaignTable(start, end){
+  var rows = rawRows.filter(function(r){ return r.date>=start && r.date<=end; });
+  var camps = aggByCampaign(rows).map(function(c){ c.roas = c.spend>0?(c.revenue/c.spend):0; c.ctr = c.impressions>0?(c.clicks/c.impressions*100):0; return c; })
+    .sort(function(a,b){ return b.spend-a.spend; });
+  var tbody = document.getElementById('campaignTable');
+  if(!tbody) return;
+  if(camps.length===0){
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลแคมเปญในช่วงที่เลือก</td></tr>';
+    return;
+  }
+  tbody.innerHTML = camps.map(function(c){
+    return '<tr class="camp-tbl-row" data-name="'+c.campaign.replace(/"/g,'&quot;')+'" data-id="'+(c.campaignId||'')+'">'
+      + '<td>'+c.campaign+'</td>'
+      + '<td class="num">'+fmtMoney(c.spend)+'</td>'
+      + '<td class="num">'+fmtInt(c.impressions)+'</td>'
+      + '<td class="num">'+c.ctr.toFixed(2)+'%</td>'
+      + '<td class="num">'+fmtInt(c.purchases)+'</td>'
+      + '<td class="num">'+fmtMoney(c.revenue)+'</td>'
+      + '<td class="num">'+c.roas.toFixed(2)+'x</td>'
+      + '</tr>';
+  }).join('');
+  tbody.querySelectorAll('.camp-tbl-row').forEach(function(tr){
+    tr.addEventListener('click', function(){ openCampDrawer(this.dataset.name, this.dataset.id); });
+  });
+}
+
+function ensureCampDrawer(){
+  if(document.getElementById('campDrawerOverlay')) return;
+  var overlay = document.createElement('div');
+  overlay.id = 'campDrawerOverlay';
+  overlay.className = 'camp-drawer-overlay';
+  overlay.addEventListener('click', closeCampDrawer);
+  var drawer = document.createElement('div');
+  drawer.id = 'campDrawer';
+  drawer.className = 'camp-drawer';
+  drawer.innerHTML = ''
+    + '<div class="camp-drawer-head">'
+    +   '<div class="camp-drawer-title" id="campDrawerTitle">แคมเปญ</div>'
+    +   '<button class="camp-drawer-close" id="campDrawerClose">&times;</button>'
+    + '</div>'
+    + '<div class="camp-drawer-body" id="campDrawerBody"></div>';
+  document.body.appendChild(overlay);
+  document.body.appendChild(drawer);
+  document.getElementById('campDrawerClose').addEventListener('click', closeCampDrawer);
+}
+
+function openCampDrawer(name, id){
+  ensureCampDrawer();
+  campDrawerCampaign = {name:name, id:id||''};
+  campDrawerRangeDays = 7;
+  document.getElementById('campDrawerTitle').textContent = name;
+  document.getElementById('campDrawerOverlay').classList.add('open');
+  document.getElementById('campDrawer').classList.add('open');
+  renderCampDrawerBody();
+}
+function closeCampDrawer(){
+  var ov = document.getElementById('campDrawerOverlay'); if(ov) ov.classList.remove('open');
+  var dw = document.getElementById('campDrawer'); if(dw) dw.classList.remove('open');
+}
+
+function campRowsFor(days){
+  var today = todayBangkok();
+  var start = days<=1 ? today : addDaysStr(today,-(days-1));
+  return rawRows.filter(function(r){ return r.campaign===campDrawerCampaign.name && r.date>=start && r.date<=today; });
+}
+
+function renderCampDrawerBody(){
+  var body = document.getElementById('campDrawerBody');
+  var rows = campRowsFor(campDrawerRangeDays);
+  var t = aggTotals(rows);
+  var roas = t.spend>0 ? t.revenue/t.spend : 0;
+  var ctr = t.impressions>0 ? (t.clicks/t.impressions*100) : 0;
+
+  var rangeOpts = [[1,'วันนี้'],[3,'3 วัน'],[7,'7 วัน'],[30,'30 วัน']];
+  var pillsHtml = '<div class="fx-controls">' + rangeOpts.map(function(o){
+    return '<button class="pill camp-range'+(o[0]===campDrawerRangeDays?' active':'')+'" data-days="'+o[0]+'">'+o[1]+'</button>';
+  }).join('') + '</div>';
+
+  var kpiHtml = '<div class="camp-kpi-grid">'
+    + campKpiCard('Spend', fmtMoney(t.spend), '#e6127a')
+    + campKpiCard('ROAS', roas.toFixed(2)+'x', roas>=2?'#1fb872':(roas>=1?'#d4a339':'#e5484d'))
+    + campKpiCard('CTR', ctr.toFixed(2)+'%', '#3a1a2a')
+    + campKpiCard('การสนทนา', fmtInt(t.conversations)+' ครั้ง', '#3a1a2a')
+    + '</div>';
+
+  var chartHtml = '<div class="camp-chart-wrap"><canvas id="campChartCanvas" height="180"></canvas></div>';
+  var aiHtml = '<div class="camp-ai-title">🤖 AI แนะนำ</div><div id="campAiCards"></div>';
+  var creativesHtml = '<div class="camp-section-title">📷 AD CREATIVES</div>'
+    + '<button class="camp-fetch-btn" id="campFetchCreatives">ดึง Ad Creatives จาก Facebook</button>'
+    + '<div id="campCreativesGrid" class="camp-creatives-grid"></div>';
+  var ceoHtml = '<button class="camp-ceo-btn" id="campCeoBtn">📊 สรุปให้ CEO</button>'
+    + '<div id="campCeoResult"></div>';
+
+  body.innerHTML = pillsHtml + kpiHtml + chartHtml + aiHtml + creativesHtml + ceoHtml;
+
+  document.querySelectorAll('.camp-range').forEach(function(b){
+    b.addEventListener('click', function(){ campDrawerRangeDays = parseInt(this.dataset.days); renderCampDrawerBody(); });
+  });
+  document.getElementById('campFetchCreatives').addEventListener('click', fetchCampCreatives);
+  document.getElementById('campCeoBtn').addEventListener('click', showCeoSummary);
+
+  drawCampChart(rows);
+  renderCampAiCards(t, roas, ctr, rows);
+}
+
+function campKpiCard(label, val, col){
+  return '<div class="camp-kpi"><div class="camp-kpi-label">'+label+'</div><div class="camp-kpi-val" style="color:'+col+'">'+val+'</div></div>';
+}
+
+function drawCampChart(rows){
+  var byDate = aggregateByDate(rows);
+  var dates = Object.keys(byDate).sort();
+  var spendSeries = dates.map(function(d){ return byDate[d].spend; });
+  var roasSeries = dates.map(function(d){ var m=byDate[d]; return m.spend>0 ? m.revenue/m.spend : 0; });
+  var ctx = document.getElementById('campChartCanvas').getContext('2d');
+  if(campChartInst) campChartInst.destroy();
+  campChartInst = new Chart(ctx, {
+    data: {
+      labels: dates,
+      datasets: [
+        {type:'bar', label:'Spend', data:spendSeries, backgroundColor:'rgba(230,18,122,.55)', yAxisID:'y'},
+        {type:'line', label:'ROAS', data:roasSeries, borderColor:'#d4a339', backgroundColor:'transparent', yAxisID:'y1', tension:.3, pointRadius:2}
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{legend:{position:'top', labels:{usePointStyle:true, font:{size:10}}}},
+      scales:{
+        y:{beginAtZero:true, ticks:{callback:function(v){return '฿'+v.toLocaleString();}}},
+        y1:{beginAtZero:true, position:'right', grid:{drawOnChartArea:false}, ticks:{callback:function(v){return v.toFixed(1)+'x';}}}
+      }
+    }
+  });
+}
+
+function renderCampAiCards(t, roas, ctr, rows){
+  var el = document.getElementById('campAiCards');
+  var cards = [];
+  if(roas >= 2){ cards.push({icon:'✅', cls:'good', h:'ผลดี คงไว้', p:'ROAS '+roas.toFixed(2)+'x อยู่ในเกณฑ์ดี — คงงบปัจจุบันและติดตามต่อ'}); }
+  else if(roas >= 1){ cards.push({icon:'⚖️', cls:'warn', h:'พอคุ้มทุน', p:'ROAS '+roas.toFixed(2)+'x คุ้มทุนเล็กน้อย ลองทดสอบ Creative ใหม่เพื่อดันขึ้น'}); }
+  else { cards.push({icon:'🛑', cls:'crit', h:'ต้องปรับด่วน', p:'ROAS '+roas.toFixed(2)+'x ต่ำกว่าจุดคุ้มทุน ควรพิจารณาลดงบหรือเปลี่ยน Creative'}); }
+
+  if(ctr >= 1.5){ cards.push({icon:'🎯', cls:'good', h:'CTR ดี', p:'CTR '+ctr.toFixed(2)+'% — Creative ดึงดูดได้ดี'}); }
+  else { cards.push({icon:'🎯', cls:'warn', h:'CTR ควรปรับ', p:'CTR '+ctr.toFixed(2)+'% ค่อนข้างต่ำ ลองเปลี่ยนภาพปก/Hook'}); }
+
+  var byDate = aggregateByDate(rows);
+  var dates = Object.keys(byDate).sort();
+  if(dates.length >= 4){
+    var half = Math.floor(dates.length/2);
+    var firstHalf = dates.slice(0, half), secondHalf = dates.slice(half);
+    function avgSpend(ds){ return ds.reduce(function(s,d){return s+byDate[d].spend;},0) / (ds.length||1); }
+    var a1 = avgSpend(firstHalf), a2 = avgSpend(secondHalf);
+    if(a1>0){
+      var chg = (a2-a1)/a1*100;
+      if(Math.abs(chg) >= 15){
+        cards.push({icon: chg>0?'📈':'📉', cls:'info', h:'Spend '+(chg>0?'เพิ่มขึ้น':'ลดลง')+' '+Math.abs(chg).toFixed(0)+'%', p:'ช่วงหลัง Spend เฉลี่ย '+fmtMoney(a2)+'/วัน '+(chg>0?'สูงขึ้น':'ต่ำลง')+'จากช่วงแรก'});
+      }
+    }
+  }
+  el.innerHTML = cards.map(function(c){
+    return '<div class="camp-ai-card '+c.cls+'"><div class="camp-ai-card-h">'+c.icon+' '+c.h+'</div><div class="camp-ai-card-p">'+c.p+'</div></div>';
+  }).join('');
+}
+
+function fetchCampCreatives(){
+  var grid = document.getElementById('campCreativesGrid');
+  grid.innerHTML = '<div class="fx-empty">⏳ กำลังดึงข้อมูล...</div>';
+  var camp = campDrawerCampaign;
+  if(!camp.id){
+    grid.innerHTML = '<div class="fx-empty">ไม่พบรหัสแคมเปญ</div>';
+    return;
+  }
+  var filtering = encodeURIComponent(JSON.stringify([{field:'campaign.id', operator:'EQUAL', value:camp.id}]));
+  var url = FB_API + ACCOUNT_ID + '/ads?filtering=' + filtering + '&fields=id,name,creative{thumbnail_url,image_url,video_id}&limit=50&access_token=' + ACCOUNT_TOKEN_NAME;
+  fetch(url).then(function(r){return r.json();}).then(function(d){
+    if(d.error || !d.data || d.data.length===0){
+      grid.innerHTML = '<div class="fx-empty">ไม่พบครีเอทีฟสำหรับแคมเปญนี้</div>';
+      return;
+    }
+    grid.innerHTML = d.data.map(function(ad){
+      var cr = ad.creative || {};
+      var img = cr.thumbnail_url || cr.image_url || '';
+      return '<div class="camp-creative-card">'
+        + (img ? '<img src="'+img+'" onerror="this.style.display=\'none\'">' : '<div class="camp-creative-ph">🎬</div>')
+        + '<div class="camp-creative-name" title="'+(ad.name||'')+'">'+(ad.name||'ไม่ระบุ')+'</div>'
+        + '</div>';
+    }).join('');
+  }).catch(function(err){
+    grid.innerHTML = '<div class="fx-empty">โหลดไม่สำเร็จ: '+err.message+'</div>';
+  });
+}
+
+function showCeoSummary(){
+  var resEl = document.getElementById('campCeoResult');
+  var rows = campRowsFor(campDrawerRangeDays);
+  var t = aggTotals(rows);
+  var roas = t.spend>0 ? t.revenue/t.spend : 0;
+  var ctr = t.impressions>0 ? (t.clicks/t.impressions*100) : 0;
+  var rangeLabel = campDrawerRangeDays===1?'วันนี้':(campDrawerRangeDays+' วันที่ผ่านมา');
+  var verdict = roas>=2 ? 'ผลลัพธ์ดีมาก ควรเพิ่มงบต่อเนื่อง' : (roas>=1 ? 'คุ้มทุน แต่ยังพอปรับปรุงได้' : 'ยังไม่คุ้มทุน ควรพิจารณาปรับหรือหยุด');
+  var text = 'สรุปผลแคมเปญ "'+campDrawerCampaign.name+'" ('+rangeLabel+')\n\n'
+    + '• ยอดใช้จ่าย: '+fmtMoney(t.spend)+'\n'
+    + '• ยอดขาย: '+fmtMoney(t.revenue)+'\n'
+    + '• ROAS: '+roas.toFixed(2)+'x\n'
+    + '• CTR: '+ctr.toFixed(2)+'%\n'
+    + '• คำสั่งซื้อ: '+fmtInt(t.purchases)+' ออเดอร์\n'
+    + '• การสนทนา: '+fmtInt(t.conversations)+' ครั้ง\n\n'
+    + 'สรุป: '+verdict;
+  resEl.innerHTML = '<div class="camp-ceo-box"><pre>'+text+'</pre><button class="camp-ceo-copy" id="campCeoCopyBtn">📋 คัดลอก</button></div>';
+  document.getElementById('campCeoCopyBtn').addEventListener('click', function(){
+    navigator.clipboard.writeText(text).then(function(){
+      var b = document.getElementById('campCeoCopyBtn'); b.textContent = '✅ คัดลอกแล้ว';
+      setTimeout(function(){ b.textContent = '📋 คัดลอก'; }, 1500);
+    });
   });
 }
 
