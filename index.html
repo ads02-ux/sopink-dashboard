@@ -202,6 +202,63 @@ footer b{color:var(--pink-dark)}
 .alert-icon{font-size:20px;flex-shrink:0}
 .alert-body b{display:block;font-size:13.5px;color:var(--text);margin-bottom:3px}
 .alert-body span{font-size:12.5px;color:var(--text-soft)}
+
+/* ---- extra: ranking controls / ads table / ai-content / alert thresholds ---- */
+.fx-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.fx-controls .ctrl-label{font-size:12px;color:var(--text-soft);font-weight:600;margin-right:4px}
+.ads-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.legend-chip{font-size:11.5px;font-weight:700;padding:5px 12px;border-radius:999px}
+.legend-chip.red{background:rgba(229,72,77,.12);color:var(--red)}
+.legend-chip.green{background:rgba(31,184,114,.12);color:var(--green)}
+.ads-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.ads-tbl th{text-align:left;padding:9px 10px;background:var(--pink-pale);color:var(--pink-dark);font-weight:700;font-size:11px;text-transform:uppercase;white-space:nowrap}
+.ads-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+.ads-tbl td.num,.ads-tbl th.num{text-align:right}
+.roas-x{font-weight:700}
+.roas-x.lt1{color:var(--red)}
+.roas-x.ge2{color:var(--green)}
+.roas-x.mid{color:var(--gold)}
+.budget-arrow{font-size:12px;color:var(--text-soft)}
+.advice-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.advice-chip.cut{background:rgba(229,72,77,.12);color:var(--red)}
+.advice-chip.raise{background:rgba(31,184,114,.12);color:var(--green)}
+.advice-chip.warn{background:rgba(212,163,57,.15);color:var(--gold)}
+.advice-chip.hold{background:rgba(90,120,220,.12);color:#4a63c9}
+
+.cls-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px}
+.cls-tbl th{text-align:left;padding:9px 12px;background:var(--pink-pale);color:var(--pink-dark);font-weight:700;font-size:11.5px;text-transform:uppercase}
+.cls-tbl td{padding:9px 12px;border-bottom:1px solid var(--border)}
+.cls-tbl td.num{text-align:right}
+.stop-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.stop-item{display:flex;justify-content:space-between;gap:10px;background:#fff0f0;border:1px solid #ffc9cc;border-radius:12px;padding:10px 14px;font-size:13px}
+.stop-item b{color:var(--red)}
+.competitor-btn{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:10px 18px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--pink-dark);font-weight:700;font-size:13px;cursor:pointer;text-decoration:none}
+.competitor-btn:hover{background:var(--pink-pale)}
+
+.thr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:14px}
+.thr-field label{display:block;font-size:11.5px;color:var(--text-soft);font-weight:600;margin-bottom:5px}
+.thr-field input{width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--border);font-size:13px;font-family:inherit;color:var(--text)}
+.thr-save{padding:10px 20px;border-radius:10px;border:none;background:var(--text);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+.thr-save:hover{opacity:.85}
+.alert-meta-line{font-size:12px;color:var(--text-soft);margin-bottom:14px}
+.alert-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:760px){.alert-stats{grid-template-columns:repeat(2,1fr)}}
+.alert-stat{border-radius:16px;padding:18px;text-align:center;border:2px solid}
+.alert-stat.crit{background:#fff0f0;border-color:#ffc9cc}
+.alert-stat.warn{background:#fff9e8;border-color:#ffe4a3}
+.alert-stat.good{background:#eafbf3;border-color:#b9ecd3}
+.alert-stat.raise{background:#eef2ff;border-color:#c7d2fe}
+.alert-stat .num{font-family:'Prompt',sans-serif;font-size:28px;font-weight:800}
+.alert-stat.crit .num{color:var(--red)}
+.alert-stat.warn .num{color:var(--gold)}
+.alert-stat.good .num{color:var(--green)}
+.alert-stat.raise .num{color:#4a63c9}
+.alert-stat .lbl{font-size:12px;color:var(--text-soft);margin-top:4px;font-weight:600}
+.alert-group-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:14px;margin:18px 0 10px;display:flex;align-items:center;gap:6px}
+.alert-group-title.crit{color:var(--red)}
+.alert-group-title.warn{color:var(--gold)}
+.alert-group-title.raise{color:#4a63c9}
+.alert-group-title.good{color:var(--green)}
 </style>
 </head>
 <body>
@@ -615,187 +672,294 @@ function aggByCampaign(rows){
   return Object.keys(map).map(function(k){ return map[k]; });
 }
 
+
+function periodRoasMap(){
+  var today = todayBangkok();
+  var y = addDaysStr(today,-1);
+  var d3start = addDaysStr(today,-2);
+  var d7start = addDaysStr(today,-6);
+  function campSet(startYMD,endYMD){
+    var rows = rawRows.filter(function(r){ return r.date>=startYMD && r.date<=endYMD; });
+    var map = {};
+    aggByCampaign(rows).forEach(function(c){ map[c.campaign] = c; });
+    return map;
+  }
+  return { today: campSet(today,today), y: campSet(y,y), d3: campSet(d3start,today), d7: campSet(d7start,today) };
+}
+function roasOf(m, name){
+  var c = m[name];
+  if(!c || c.spend<=0) return null;
+  return c.revenue/c.spend;
+}
+function fmtK(n){
+  n = Math.round(n);
+  if(Math.abs(n) >= 1000) return '฿'+Math.round(n/1000)+'K';
+  return '฿'+n;
+}
+
+var CONTENT_CATS = [
+  {key:'expert', label:'ผู้เชี่ยวชาญ/หมอ', kws:['หมอ','แพทย์','ผู้เชี่ยวชาญ','เภสัช']},
+  {key:'promo', label:'โปรโมชั่น/ลดราคา', kws:['โปร','ลด','ส่วนลด','แถม','ราคา']},
+  {key:'beforeafter', label:'Before/After', kws:['ก่อนหลัง','ก่อน-หลัง','beforeafter','ก่อน','หลัง']},
+  {key:'ugc', label:'UGC/ลูกค้าจริง', kws:['ugc','ลูกค้าจริง','ลูกค้าใช้จริง']},
+  {key:'review', label:'รีวิวลูกค้า', kws:['รีวิว','review']},
+  {key:'kol', label:'ดารา/KOL', kws:['ดารา','kol','เซเลบ','influencer','บล็อกเกอร์']},
+  {key:'problem', label:'Problem-Solution', kws:['ปัญหา','แก้ปัญหา','solution']},
+  {key:'general', label:'ทั่วไป', kws:[]}
+];
+function classifyCampaign(name){
+  var n = (name||'').toLowerCase();
+  for(var i=0;i<CONTENT_CATS.length-1;i++){
+    var cat = CONTENT_CATS[i];
+    for(var j=0;j<cat.kws.length;j++){
+      if(n.indexOf(cat.kws[j].toLowerCase()) !== -1) return cat.key;
+    }
+  }
+  return 'general';
+}
+
 function renderAIContent(){
-  var rows = last30Rows();
   var el = document.getElementById('aiContentBody');
+  var rows = last30Rows();
   if(rows.length === 0){ el.innerHTML = '<div class="fx-empty">ยังไม่มีข้อมูลเพียงพอสำหรับวิเคราะห์</div>'; return; }
-  var t = aggTotals(rows);
-  var ctr = t.impressions>0 ? (t.clicks/t.impressions*100) : 0;
-  var cvr = t.clicks>0 ? (t.purchases/t.clicks*100) : 0;
-  var byDate = aggregateByDate(rows);
-  var dates = Object.keys(byDate).sort();
-  var bestDate = null, bestRoas = -1;
-  dates.forEach(function(d){
-    var m = byDate[d];
-    var r = m.spend>0 ? (m.revenue/m.spend) : 0;
-    if(r > bestRoas){ bestRoas = r; bestDate = d; }
-  });
+  var camps = aggByCampaign(rows).map(function(c){ c.roas = c.spend>0?(c.revenue/c.spend):0; c.cat = classifyCampaign(c.campaign); return c; });
 
-  var ideas = [];
-  if(ctr < 1){
-    ideas.push({icon:'🎯', h:'รีเฟรช Creative', p:'CTR เฉลี่ย '+ctr.toFixed(2)+'% ค่อนข้างต่ำ ลองเปลี่ยนภาพปก/วิดีโอเปิดให้ดึงดูดขึ้น หรือทำ Hook ใน 3 วินาทีแรกให้แรงกว่านี้'});
-  } else {
-    ideas.push({icon:'✅', h:'Creative ทำงานได้ดี', p:'CTR เฉลี่ย '+ctr.toFixed(2)+'% อยู่ในเกณฑ์ดี ลองทำคอนเทนต์แนวเดิมเพิ่ม เช่น รีวิวจริง/ก่อน-หลัง'});
-  }
-  if(bestDate){
-    ideas.push({icon:'📅', h:'วันที่ผลลัพธ์ดีที่สุด', p:'วันที่ '+bestDate+' ทำ ROAS ได้ '+bestRoas.toFixed(2)+'x สูงสุดในช่วงนี้ ลองดูว่าโพสต์/แคมเปญไหนที่รันวันนั้นแล้วทำคอนเทนต์แนวนั้นซ้ำ'});
-  }
-  if(cvr < 5 && t.clicks > 20){
-    ideas.push({icon:'🛒', h:'ปิดการขายให้แรงขึ้น', p:'อัตราปิดการขายจากคลิก '+cvr.toFixed(1)+'% ยังต่ำ ลองเพิ่มรีวิว/โปรโมชั่นจำกัดเวลาในหน้า Landing page หรือแคปชั่น'});
-  }
-  ideas.push({icon:'💬', h:'ใช้ Conversation Ads', p:'มีคนทักแชท '+fmtInt(t.conversations)+' ครั้งใน 30 วัน ลองทำคอนเทนต์แนวถาม-ตอบ FAQ เพื่อดึงคนทักเข้ามาเพิ่ม'});
+  var byCat = {};
+  CONTENT_CATS.forEach(function(cat){ byCat[cat.key] = {label:cat.label, count:0, spend:0, revenue:0}; });
+  camps.forEach(function(c){ var b = byCat[c.cat]; b.count++; b.spend += c.spend; b.revenue += c.revenue; });
+  var catRows = CONTENT_CATS.map(function(cat){
+    var b = byCat[cat.key]; b.roas = b.spend>0 ? (b.revenue/b.spend) : 0; b.key = cat.key; return b;
+  }).filter(function(b){ return b.count>0; }).sort(function(a,b){ return b.roas-a.roas; });
 
-  el.innerHTML = '<div class="ai-cards">' + ideas.map(function(i){
-    return '<div class="ai-card"><h4>'+i.icon+' '+i.h+'</h4><p>'+i.p+'</p></div>';
-  }).join('') + '</div>';
+  var tblHtml = '<table class="cls-tbl"><thead><tr><th>ประเภทคอนเทนต์</th><th class="num">จำนวนแคมเปญ</th><th class="num">Spend</th><th class="num">Revenue</th><th class="num">ROAS</th></tr></thead><tbody>'
+    + catRows.map(function(b){
+        var cls = b.roas>=2?'top':(b.roas>=1?'mid':'low');
+        return '<tr><td>'+b.label+'</td><td class="num">'+b.count+'</td><td class="num">'+fmtMoney(b.spend)+'</td><td class="num">'+fmtMoney(b.revenue)+'</td><td class="num"><span class="roas-chip '+cls+'">'+b.roas.toFixed(2)+'x</span></td></tr>';
+      }).join('') + '</tbody></table>';
+
+  var cards = [];
+  var topCat = catRows[0];
+  if(topCat){ cards.push({icon:'💰', h:'เพิ่มงบหมวดที่ดีที่สุด', p:'หมวด "'+topCat.label+'" ทำ ROAS '+topCat.roas.toFixed(2)+'x ลองเพิ่มงบอีก 15-20% ในแคมเปญกลุ่มนี้'}); }
+  var bestCamp = camps.slice().filter(function(c){return c.spend>0;}).sort(function(a,b){return b.roas-a.roas;})[0];
+  if(bestCamp){ cards.push({icon:'🔁', h:'ทำคอนเทนต์ซ้ำแบบที่ปังที่สุด', p:'แคมเปญ "'+bestCamp.campaign+'" ทำ ROAS '+bestCamp.roas.toFixed(2)+'x ลองทำคอนเทนต์แนวเดียวกันเพิ่ม'}); }
+  var untried = CONTENT_CATS.filter(function(cat){ return cat.key!=='general' && (!byCat[cat.key] || byCat[cat.key].count===0); });
+  if(untried.length){ cards.push({icon:'🧪', h:'ลองมุมใหม่ที่ยังไม่เคยทำ', p:'ยังไม่มีแคมเปญแนว "'+untried.slice(0,2).map(function(c){return c.label;}).join('", "')+'" ลองทดลองทำคอนเทนต์แนวนี้ดูบ้าง'}); }
+  if(catRows.length >= 2){ cards.push({icon:'🆚', h:'A/B Test 2 หมวดที่ดีที่สุด', p:'ทดสอบเทียบหมวด "'+catRows[0].label+'" กับ "'+catRows[1].label+'" เพื่อดูว่าแนวไหนคุ้มค่ากว่าในระยะยาว'}); }
+  var cardsHtml = '<div class="ai-cards" style="margin:16px 0">' + cards.map(function(c){ return '<div class="ai-card"><h4>'+c.icon+' '+c.h+'</h4><p>'+c.p+'</p></div>'; }).join('') + '</div>';
+
+  var avgSpend = camps.reduce(function(s,c){return s+c.spend;},0) / (camps.length||1);
+  var stopList = camps.filter(function(c){ return c.roas < 1 && c.spend > avgSpend; }).sort(function(a,b){ return a.roas-b.roas; }).slice(0,5);
+  var stopHtml = '';
+  if(stopList.length){
+    stopHtml = '<div class="fx-sub" style="margin-top:18px;font-weight:700;color:var(--red)">🛑 แคมเปญที่ควรหยุด/ปรับด่วน</div>'
+      + '<div class="stop-list">' + stopList.map(function(c){ return '<div class="stop-item"><span>'+c.campaign+'</span><b>ROAS '+c.roas.toFixed(2)+'x &middot; ใช้ไป '+fmtMoney(c.spend)+'</b></div>'; }).join('') + '</div>';
+  }
+  var competitorHtml = '<a class="competitor-btn" href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=TH&q=So%20Pink" target="_blank" rel="noopener">🔍 ดูโฆษณาคู่แข่งใน Facebook Ad Library</a>';
+
+  el.innerHTML = tblHtml + cardsHtml + stopHtml + competitorHtml;
 }
 
+var adsSortPeriod = 'd7';
+function adsDecision(rt, ry, r3, r7){
+  if(r7 !== null && r7 < 1) return {cls:'cut', icon:'▼', label:'ลดงบ 30% + ปรับ'};
+  if((rt !== null && rt < 1) && (r3 !== null && r3 < 1)) return {cls:'cut', icon:'▼', label:'ลดงบ 30% + ระวัง'};
+  if(r7 !== null && r7 >= 2 && (rt === null || rt >= 1)) return {cls:'raise', icon:'📈', label:'เพิ่มงบ +10-20%'};
+  if(rt !== null && r7 !== null && rt < r7 * 0.75) return {cls:'warn', icon:'⚠️', label:'ลดงบ + ทดสอบ'};
+  return {cls:'hold', icon:'👁️', label:'คงงบเดิม + เฝ้าดู'};
+}
 function renderAIAds(){
-  var rows = last30Rows();
   var el = document.getElementById('aiAdsBody');
+  var rows = last30Rows();
   if(rows.length === 0){ el.innerHTML = '<div class="fx-empty">ยังไม่มีข้อมูลเพียงพอสำหรับวิเคราะห์</div>'; return; }
-  var t = aggTotals(rows);
-  var roas = t.spend>0 ? (t.revenue/t.spend) : 0;
-  var cpp = t.purchases>0 ? (t.spend/t.purchases) : 0;
-  var ctr = t.impressions>0 ? (t.clicks/t.impressions*100) : 0;
+  var maps = periodRoasMap();
+  var campNames = Object.keys(maps.d7).sort(function(a,b){
+    var ra = roasOf(maps[adsSortPeriod], a); var rb = roasOf(maps[adsSortPeriod], b);
+    ra = ra===null? 999: ra; rb = rb===null? 999: rb;
+    return ra - rb;
+  });
+  if(campNames.length === 0){ el.innerHTML = '<div class="fx-empty">ไม่มีแคมเปญที่ใช้งบในช่วงนี้</div>'; return; }
 
-  var dec, icon, why=[], act=[];
-  if(roas >= 2){
-    dec = 'คุ้มทุนมาก ควรเพิ่มงบ'; icon='🚀';
-    why.push('ROAS เฉลี่ย 30 วัน = '+roas.toFixed(2)+'x สูงกว่าเกณฑ์คุ้มทุน (1.0x) มาก');
-    why.push('ต้นทุนต่อออเดอร์ '+fmtMoney(cpp)+' อยู่ในระดับที่รับได้');
-    act.push('ทยอยเพิ่มงบ 15-20% ทุก 2-3 วัน แล้วดู ROAS ว่ายังทรงตัวไหม');
-    act.push('ขยายกลุ่มเป้าหมายที่ใกล้เคียงกับกลุ่มที่ซื้อแล้ว (Lookalike)');
-  } else if(roas >= 1){
-    dec = 'คุ้มทุน แต่ยังพอปรับได้'; icon='⚖️';
-    why.push('ROAS เฉลี่ย 30 วัน = '+roas.toFixed(2)+'x เกินจุดคุ้มทุนเล็กน้อย');
-    why.push('CTR เฉลี่ย '+ctr.toFixed(2)+'%');
-    act.push('ทดสอบ Creative ใหม่ 2-3 แบบ (A/B Test) เพื่อดันROASให้สูงขึ้น');
-    act.push('ตัดงบกลุ่มโฆษณาที่ ROAS ต่ำกว่าค่าเฉลี่ยออก');
-  } else {
-    dec = 'ยังไม่คุ้มทุน ต้องรีบปรับ'; icon='🛑';
-    why.push('ROAS เฉลี่ย 30 วัน = '+roas.toFixed(2)+'x ต่ำกว่าจุดคุ้มทุน (1.0x)');
-    why.push('ต้นทุนต่อออเดอร์ '+(t.purchases>0?fmtMoney(cpp):'ไม่มีออเดอร์เลย'));
-    act.push('หยุด/ลดงบกลุ่มโฆษณาที่ผลลัพธ์แย่ที่สุดก่อน');
-    act.push('เปลี่ยน Creative และข้อความโฆษณาใหม่ทั้งหมด');
-    act.push('ทบทวนกลุ่มเป้าหมายว่าตรงกับลูกค้าจริงหรือไม่');
-  }
+  var periodPills = [['today','วันนี้'],['y','1 วัน'],['d3','3 วัน'],['d7','7 วัน']];
+  var controlsHtml = '<div class="fx-controls"><span class="ctrl-label">เรียงตามช่วง:</span>'
+    + periodPills.map(function(p){ return '<button class="pill ads-period'+(p[0]===adsSortPeriod?' active':'')+'" data-period="'+p[0]+'">'+p[1]+'</button>'; }).join('')
+    + '</div><div class="ads-legend"><span class="legend-chip red">ROAS &lt; 1 = ปิดทันที</span><span class="legend-chip green">Target &ge; 2x</span></div>';
 
-  var bg = roas>=2 ? '#e9fbf3' : (roas>=1 ? '#fff8e8' : '#fff0f0');
-  var col = roas>=2 ? 'var(--green)' : (roas>=1 ? 'var(--gold)' : 'var(--red)');
+  var rowsHtml = campNames.map(function(name){
+    var rt = roasOf(maps.today, name), ry = roasOf(maps.y, name), r3 = roasOf(maps.d3, name), r7 = roasOf(maps.d7, name);
+    var spend7 = (maps.d7[name]||{spend:0}).spend;
+    var spend1 = (maps.today[name]||{spend:0}).spend;
+    var dec = adsDecision(rt, ry, r3, r7);
+    function cell(v){
+      if(v===null) return '<td class="num">—</td>';
+      var cls = v<1?'lt1':(v>=2?'ge2':'mid');
+      return '<td class="num"><span class="roas-x '+cls+'">'+v.toFixed(2)+'x</span></td>';
+    }
+    var curBudget = spend7/7;
+    var newBudget = dec.cls==='cut' ? curBudget*0.7 : (dec.cls==='raise' ? curBudget*1.15 : curBudget);
+    return '<tr><td>'+name+'</td>' + cell(rt) + cell(ry) + cell(r3) + cell(r7)
+      + '<td class="num">'+fmtK(spend1)+'</td><td class="num">'+fmtK(spend7)+'</td>'
+      + '<td class="num budget-arrow">'+fmtK(curBudget)+' &rarr; '+fmtK(newBudget)+'</td>'
+      + '<td><span class="advice-chip '+dec.cls+'">'+dec.icon+' '+dec.label+'</span></td></tr>';
+  }).join('');
 
-  el.innerHTML = '<div class="ai-box" style="background:'+bg+'">'
-    + '<div class="ai-dec" style="color:'+col+'">'+icon+' '+dec+'</div>'
-    + '<div class="ai-sub">เหตุผล</div>'
-    + '<ul class="ai-list why">' + why.map(function(w){return '<li>'+w+'</li>';}).join('') + '</ul>'
-    + '<div class="ai-sub">ขั้นตอนถัดไป</div>'
-    + '<ul class="ai-list act">' + act.map(function(a){return '<li>'+a+'</li>';}).join('') + '</ul>'
-    + '</div>';
+  el.innerHTML = controlsHtml
+    + '<div style="overflow-x:auto"><table class="ads-tbl"><thead><tr>'
+    + '<th>แคมเปญ</th><th class="num">วันนี้</th><th class="num">1 วัน</th><th class="num">3 วัน</th><th class="num">7 วัน</th>'
+    + '<th class="num">Spend 1D</th><th class="num">Spend 7D</th><th class="num">งบแนะนำ</th><th>คำแนะนำ AI</th>'
+    + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+
+  document.querySelectorAll('.ads-period').forEach(function(b){
+    b.addEventListener('click', function(){ adsSortPeriod = this.dataset.period; renderAIAds(); });
+  });
 }
 
+var rankingRangeDays = 30;
+var rankingSortKey = 'roas';
+function campaignAgg(rows){
+  return aggByCampaign(rows).map(function(c){ c.roas = c.spend>0 ? (c.revenue/c.spend) : 0; return c; });
+}
+function bindRankingControls(){
+  document.querySelectorAll('.rk-range').forEach(function(b){ b.addEventListener('click', function(){ rankingRangeDays = parseInt(this.dataset.days); renderRanking(); }); });
+  document.querySelectorAll('.rk-sort').forEach(function(b){ b.addEventListener('click', function(){ rankingSortKey = this.dataset.sort; renderRanking(); }); });
+}
 function renderRanking(){
-  var rows = last30Rows();
   var el = document.getElementById('rankingBody');
-  var camps = aggByCampaign(rows).map(function(c){
-    c.roas = c.spend>0 ? (c.revenue/c.spend) : 0;
-    return c;
-  }).sort(function(a,b){ return b.roas - a.roas; });
-  if(camps.length === 0){ el.innerHTML = '<div class="fx-empty">ยังไม่มีข้อมูลแคมเปญ</div>'; return; }
+  var today = todayBangkok();
+  var start = rankingRangeDays<=1 ? today : addDaysStr(today, -(rankingRangeDays-1));
+  var rows = rawRows.filter(function(r){ return r.date>=start && r.date<=today; });
+  var camps = campaignAgg(rows);
+  if(rankingSortKey==='spend') camps.sort(function(a,b){return b.spend-a.spend;});
+  else if(rankingSortKey==='revenue') camps.sort(function(a,b){return b.revenue-a.revenue;});
+  else camps.sort(function(a,b){return b.roas-a.roas;});
+
+  var rangeOpts = [[1,'วันนี้'],[3,'3 วัน'],[7,'7 วัน'],[14,'14 วัน'],[30,'30 วัน'],[90,'90 วัน']];
+  var sortOpts = [['roas','ROAS สูงสุด'],['spend','Spend สูงสุด'],['revenue','Revenue สูงสุด']];
+  var controlsHtml = '<div class="fx-controls"><span class="ctrl-label">ช่วงเวลา:</span>'
+    + rangeOpts.map(function(o){ return '<button class="pill rk-range'+(o[0]===rankingRangeDays?' active':'')+'" data-days="'+o[0]+'">'+o[1]+'</button>'; }).join('') + '</div>'
+    + '<div class="fx-controls"><span class="ctrl-label">เรียงตาม:</span>'
+    + sortOpts.map(function(o){ return '<button class="pill rk-sort'+(o[0]===rankingSortKey?' active':'')+'" data-sort="'+o[0]+'">'+o[1]+'</button>'; }).join('') + '</div>';
+
+  if(camps.length === 0){ el.innerHTML = controlsHtml + '<div class="fx-empty">ยังไม่มีข้อมูลแคมเปญในช่วงที่เลือก</div>'; bindRankingControls(); return; }
   var medalClass = ['r1','r2','r3'];
-  el.innerHTML = '<div class="lb-list">' + camps.map(function(c, i){
+  var listHtml = '<div class="lb-list">' + camps.map(function(c, i){
     var badgeCls = i < 3 ? medalClass[i] : 'rn';
     var badgeTxt = i < 3 ? ['🥇','🥈','🥉'][i] : (i+1);
     var chipCls = c.roas >= 2 ? 'top' : (c.roas >= 1 ? 'mid' : 'low');
-    return '<div class="lb-row">'
-      + '<div class="rank-badge '+badgeCls+'">'+badgeTxt+'</div>'
+    return '<div class="lb-row"><div class="rank-badge '+badgeCls+'">'+badgeTxt+'</div>'
       + '<div><div class="lb-name">'+c.campaign+'</div><div class="lb-meta">'+fmtInt(c.purchases)+' ออเดอร์ &middot; '+fmtInt(c.impressions)+' Impr.</div></div>'
-      + '<div class="lb-val"><b>Spend</b>'+fmtMoney(c.spend)+'</div>'
-      + '<div class="lb-val"><b>Revenue</b>'+fmtMoney(c.revenue)+'</div>'
-      + '<div style="text-align:right"><span class="roas-chip '+chipCls+'">'+c.roas.toFixed(2)+'x</span></div>'
-      + '</div>';
+      + '<div class="lb-val"><b>Spend</b>'+fmtMoney(c.spend)+'</div><div class="lb-val"><b>Revenue</b>'+fmtMoney(c.revenue)+'</div>'
+      + '<div style="text-align:right"><span class="roas-chip '+chipCls+'">'+c.roas.toFixed(2)+'x</span></div></div>';
   }).join('') + '</div>';
+  el.innerHTML = controlsHtml + listHtml;
+  bindRankingControls();
 }
 
+var alertThresholds = (function(){
+  try{ var saved = JSON.parse(localStorage.getItem('sopink_alert_thr')); if(saved) return saved; }catch(e){}
+  return {warn:1.5, crit:1, raise:2, ctr:0.5, maxSpend:10000, newDays:2};
+})();
+function computeCampaignPeriodRoas(){
+  var maps = periodRoasMap();
+  var names = Object.keys(maps.d7);
+  return names.map(function(name){
+    var t = maps.today[name], r3 = maps.d3[name], r7 = maps.d7[name];
+    return {
+      name: name,
+      roasToday: t && t.spend>0 ? t.revenue/t.spend : null,
+      roas3: r3 && r3.spend>0 ? r3.revenue/r3.spend : null,
+      roas7: r7 && r7.spend>0 ? r7.revenue/r7.spend : null,
+      spend7: r7 ? r7.spend : 0,
+      spendToday: t ? t.spend : 0,
+      ctr: t && t.impressions>0 ? (t.clicks/t.impressions*100) : null
+    };
+  });
+}
+function alertAdvice(c, sevClass){
+  if(sevClass==='crit'){
+    if(c.roasToday===0 && c.spendToday>0) return '⛔ ปิดโฆษณา — ROAS = 0 วันนี้ ควรหยุดทันที';
+    return '✂️ ลดงบ 30% + ปรับ Creative ด่วน (ROAS 7 วันต่ำกว่าเกณฑ์วิกฤต)';
+  }
+  if(sevClass==='warn') return '⚠️ เฝ้าดูใกล้ชิด ลองทดสอบ Creative ใหม่หรือปรับกลุ่มเป้าหมาย';
+  if(sevClass==='raise') return '📈 ผลลัพท์ดี ลองเพิ่มงบ 10-20%';
+  return '✅ ผลลัพท์อยู่ในเกณฑ์ปกติ';
+}
 function renderAlert(){
   var el = document.getElementById('alertBody');
-  var today = todayBangkok();
-  var y = addDaysStr(today,-1);
-  var d2 = addDaysStr(today,-2);
-  var alerts = [];
+  var rows = last30Rows();
+  if(rows.length === 0){ el.innerHTML = '<div class="fx-empty">ยังไม่มีข้อมูลเพียงพอสำหรับตรวจสอบ</div>'; return; }
+  var camps = computeCampaignPeriodRoas();
+  var thr = alertThresholds;
+  var groups = {crit:[], warn:[], raise:[], good:[]};
+  camps.forEach(function(c){
+    var r7 = c.roas7, rt = c.roasToday;
+    if((r7 !== null && r7 < thr.crit) || (rt === 0 && c.spendToday>0)) groups.crit.push(c);
+    else if(r7 !== null && r7 >= thr.raise) groups.raise.push(c);
+    else if((r7 !== null && r7 < thr.warn) || (c.ctr !== null && c.ctr < thr.ctr)) groups.warn.push(c);
+    else groups.good.push(c);
+  });
 
-  var mToday = dailyAgg[today], mY = dailyAgg[y], mD2 = dailyAgg[d2];
+  var statsHtml = '<div class="alert-stats">'
+    + '<div class="alert-stat crit"><div class="num">'+groups.crit.length+'</div><div class="lbl">🔴 วิกฤต</div></div>'
+    + '<div class="alert-stat warn"><div class="num">'+groups.warn.length+'</div><div class="lbl">🟡 เตือน</div></div>'
+    + '<div class="alert-stat good"><div class="num">'+groups.good.length+'</div><div class="lbl">🟢 ปกติ</div></div>'
+    + '<div class="alert-stat raise"><div class="num">'+groups.raise.length+'</div><div class="lbl">🚀 เพิ่มงบ</div></div></div>';
+  var metaHtml = '<div class="alert-meta-line">📅 '+todayBangkok()+' &middot; '+camps.length+' แคมเปญ &middot; สแกนเมื่อ '+new Date().toLocaleTimeString('th-TH')+'</div>';
 
-  if(mY){
-    var roasY = mY.spend>0 ? (mY.revenue/mY.spend) : 0;
-    if(mY.spend > 0 && mY.revenue === 0){
-      alerts.push({sev:'crit', icon:'🛑', title:'เมื่อวานใช้งบแต่ไม่มียอดขายเลย', desc:'ใช้ไป '+fmtMoney(mY.spend)+' แต่ยอดขาย ฿0 ควรตรวจสอบ Pixel/Creative ด่วน'});
-    } else if(roasY < 1 && mY.spend > 0){
-      alerts.push({sev:'warn', icon:'⚠️', title:'ROAS เมื่อวานต่ำกว่าจุดคุ้มทุน', desc:'ROAS = '+roasY.toFixed(2)+'x (ใช้ '+fmtMoney(mY.spend)+' ได้ยอดขาย '+fmtMoney(mY.revenue)+')'});
-    } else if(roasY >= 2){
-      alerts.push({sev:'good', icon:'🎉', title:'เมื่อวานผลลัพธ์ดีมาก', desc:'ROAS = '+roasY.toFixed(2)+'x ลองเพิ่มงบดูได้'});
-    }
+  function thrField(key, label, val){ return '<div class="thr-field"><label>'+label+'</label><input type="number" step="0.1" data-key="'+key+'" value="'+val+'"></div>'; }
+  var thrHtml = '<div class="fx-panel" style="padding:16px 18px;margin-bottom:18px;box-shadow:none;border-style:dashed"><div class="thr-grid">'
+    + thrField('warn','ROAS เตือน', thr.warn) + thrField('crit','ROAS วิกฤต', thr.crit) + thrField('raise','ROAS เพิ่มงบ', thr.raise)
+    + thrField('ctr','CTR ต่ำสุด %', thr.ctr) + thrField('maxSpend','งบสูงสุด/วัน (฿)', thr.maxSpend) + thrField('newDays','ปิดแคมเปญใหม่ (วัน)', thr.newDays)
+    + '</div><button class="thr-save" id="thrSaveBtn">💾 บันทึกเกณฑ์</button></div>';
+
+  function groupBlock(list, sevClass, title){
+    if(list.length===0) return '';
+    return '<div class="alert-group-title '+sevClass+'">'+title+' ('+list.length+')</div>' + '<div class="alert-list">' + list.map(function(c){
+      var advice = alertAdvice(c, sevClass);
+      var line = 'ROAS วันนี้ '+(c.roasToday===null?'—':c.roasToday.toFixed(2)+'x')+' &middot; 3 วัน '+(c.roas3===null?'—':c.roas3.toFixed(2)+'x')+' &middot; 7 วัน '+(c.roas7===null?'—':c.roas7.toFixed(2)+'x')+' &middot; ใช้งบ 7 วัน '+fmtMoney(c.spend7);
+      var iconMap = {crit:'🔴',warn:'🟡',raise:'🚀',good:'🟢'};
+      return '<div class="alert-item '+(sevClass==='raise'?'good':sevClass)+'"><div class="alert-icon">'+iconMap[sevClass]+'</div><div class="alert-body"><b>'+c.name+'</b><span>'+line+'</span><br><span>'+advice+'</span></div></div>';
+    }).join('') + '</div>';
   }
+  var listHtml = groupBlock(groups.crit,'crit','🔴 วิกฤต — ต้องแก้ไขทันที')
+    + groupBlock(groups.warn,'warn','🟡 เตือน — ควรติดตาม')
+    + groupBlock(groups.raise,'raise','🚀 ควรเพิ่มงบ')
+    + groupBlock(groups.good,'good','🟢 ปกติ');
 
-  if(mToday && mY && mY.spend > 0){
-    var change = (mToday.spend - mY.spend) / mY.spend * 100;
-    if(change > 50){
-      alerts.push({sev:'info', icon:'📈', title:'งบวันนี้พุ่งขึ้นกว่าเมื่อวาน '+change.toFixed(0)+'%', desc:'ใช้ไปแล้ว '+fmtMoney(mToday.spend)+' เทียบกับเมื่อวาน '+fmtMoney(mY.spend)});
-    }
+  el.innerHTML = metaHtml + thrHtml + statsHtml + listHtml;
+  var saveBtn = document.getElementById('thrSaveBtn');
+  if(saveBtn){
+    saveBtn.addEventListener('click', function(){
+      document.querySelectorAll('#alertBody .thr-field input').forEach(function(inp){ alertThresholds[inp.dataset.key] = parseFloat(inp.value) || 0; });
+      try{ localStorage.setItem('sopink_alert_thr', JSON.stringify(alertThresholds)); }catch(e){}
+      renderAlert();
+    });
   }
-
-  var last3 = [today,y,d2].map(function(d){ return dailyAgg[d]; }).filter(Boolean);
-  var totalPurchase3 = last3.reduce(function(s,m){ return s + m.purchases; }, 0);
-  if(last3.length >= 3 && totalPurchase3 === 0){
-    var totalSpend3 = last3.reduce(function(s,m){ return s + m.spend; }, 0);
-    if(totalSpend3 > 0) alerts.push({sev:'crit', icon:'🚨', title:'ไม่มีออเดอร์เลย 3 วันติดต่อกัน', desc:'ใช้งบไปแล้ว '+fmtMoney(totalSpend3)+' โดยไม่มีคำสั่งซื้อ ควรหยุดพิจารณาปรับแคมเปญด่วน'});
-  }
-
-  if(alerts.length === 0){
-    alerts.push({sev:'good', icon:'✅', title:'ไม่มีความผิดปกติ', desc:'ผลลัพธ์แคมเปญอยู่ในเกณฑ์ปกติช่วงนี้'});
-  }
-
-  el.innerHTML = '<div class="alert-list">' + alerts.map(function(a){
-    return '<div class="alert-item '+a.sev+'"><div class="alert-icon">'+a.icon+'</div><div class="alert-body"><b>'+a.title+'</b><span>'+a.desc+'</span></div></div>';
-  }).join('') + '</div>';
 }
 
 function renderVideo(){
   var el = document.getElementById('videoBody');
   var now = new Date();
   var since = new Date(now); since.setDate(since.getDate()-29);
-  var fields = 'campaign_name,impressions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions,video_play_actions';
+  var fields = 'campaign_name,spend,impressions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p100_watched_actions,video_play_actions';
   var timeRange = encodeURIComponent(JSON.stringify({since:toYMD(since), until:toYMD(now)}));
-  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields
-    + '&level=campaign&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
+  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields + '&level=campaign&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
   fetch(url).then(function(r){ return r.json(); }).then(function(d){
-    if(d.error || !d.data || d.data.length === 0){
-      el.innerHTML = '<div class="fx-empty">ไม่มีข้อมูลวิดีโอในช่วง 30 วันล่าสุด (อาจไม่มีแคมเปญวิดีโอที่รันอยู่)</div>';
-      return;
-    }
+    if(d.error || !d.data || d.data.length === 0){ el.innerHTML = '<div class="fx-empty">ไม่มีข้อมูลวิดีโอในช่วง 30 วันล่าสุด (อาจไม่มีแคมเปญวิดีโอที่รันอยู่)</div>'; return; }
     function sumAction(arr){ var s=0; (arr||[]).forEach(function(a){ s += parseFloat(a.value)||0; }); return s; }
     var rows = d.data.map(function(c){
-      var plays = sumAction(c.video_play_actions);
-      var p25 = sumAction(c.video_p25_watched_actions);
-      var p100 = sumAction(c.video_p100_watched_actions);
-      var impr = parseInt(c.impressions)||0;
-      var hookRate = impr>0 ? (p25/impr*100) : 0;
-      var completeRate = plays>0 ? (p100/plays*100) : 0;
-      return {name:c.campaign_name||'ไม่ระบุ', plays:plays, hookRate:hookRate, completeRate:completeRate};
-    }).filter(function(r){ return r.plays > 0; }).sort(function(a,b){ return b.plays - a.plays; });
-    if(rows.length === 0){
-      el.innerHTML = '<div class="fx-empty">ไม่พบแคมเปญที่มีการเล่นวิดีโอในช่วงนี้</div>';
-      return;
-    }
-    el.innerHTML = '<table class="video-tbl"><thead><tr><th>แคมเปญ</th><th>ยอดเล่น</th><th>Hook Rate (ดูถึง 25%)</th><th>ดูจบ (100%)</th></tr></thead><tbody>'
+      var plays = sumAction(c.video_play_actions), p25 = sumAction(c.video_p25_watched_actions), p50 = sumAction(c.video_p50_watched_actions), p75 = sumAction(c.video_p75_watched_actions), p100 = sumAction(c.video_p100_watched_actions);
+      var impr = parseInt(c.impressions)||0, spend = parseFloat(c.spend)||0;
+      var hookRate = impr>0 ? (p25/impr*100) : 0, r50 = plays>0 ? (p50/plays*100) : 0, r75 = plays>0 ? (p75/plays*100) : 0, completeRate = plays>0 ? (p100/plays*100) : 0;
+      return {name:c.campaign_name||'ไม่ระบุ', spend:spend, impr:impr, plays:plays, hookRate:hookRate, r50:r50, r75:r75, completeRate:completeRate};
+    }).filter(function(r){ return r.plays > 0; }).sort(function(a,b){ return b.hookRate - a.hookRate; });
+    if(rows.length === 0){ el.innerHTML = '<div class="fx-empty">ไม่พบแคมเปญที่มีการเล่นวิดีโอในช่วงนี้</div>'; return; }
+    el.innerHTML = '<div style="overflow-x:auto"><table class="video-tbl"><thead><tr><th>แคมเปญ</th><th>Spend</th><th>ยอดเล่น</th><th>Hook Rate (25%)</th><th>ดูถึง 50%</th><th>ดูถึง 75%</th><th>ดูจบ (100%)</th></tr></thead><tbody>'
       + rows.map(function(r){
-          return '<tr><td>'+r.name+'</td><td>'+fmtInt(r.plays)+'</td>'
+          return '<tr><td>'+r.name+'</td><td>'+fmtMoney(r.spend)+'</td><td>'+fmtInt(r.plays)+'</td>'
             + '<td><div style="display:flex;align-items:center;gap:8px"><div class="hook-bar" style="flex:1"><div class="hook-bar-fill" style="width:'+Math.min(100,r.hookRate).toFixed(0)+'%"></div></div><span>'+r.hookRate.toFixed(1)+'%</span></div></td>'
-            + '<td>'+r.completeRate.toFixed(1)+'%</td></tr>';
-        }).join('')
-      + '</tbody></table>';
-  }).catch(function(err){
-    el.innerHTML = '<div class="fx-empty">โหลดข้อมูลวิดีโอไม่สำเร็จ: '+err.message+'</div>';
-  });
+            + '<td>'+r.r50.toFixed(1)+'%</td><td>'+r.r75.toFixed(1)+'%</td><td>'+r.completeRate.toFixed(1)+'%</td></tr>';
+        }).join('') + '</tbody></table></div>';
+  }).catch(function(err){ el.innerHTML = '<div class="fx-empty">โหลดข้อมูลวิดีโอไม่สำเร็จ: '+err.message+'</div>'; });
 }
 
 var VIEW_RENDERERS = {
