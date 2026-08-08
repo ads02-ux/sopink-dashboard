@@ -469,6 +469,11 @@ footer b{color:var(--pink-dark)}
         <div class="kpi-value" id="kCpp">฿0</div>
         <div class="kpi-sub">ต้นทุนต่อออเดอร์</div>
       </div>
+      <div class="kpi">
+        <div class="kpi-label">💬 Cost / Conversation</div>
+        <div class="kpi-value" id="kCpc">฿0</div>
+        <div class="kpi-sub">ต้นทุนต่อการสนทนา</div>
+      </div>
     </div>
 
     <div class="panel">
@@ -698,6 +703,7 @@ function render(){
   var pnl = tot.revenue - tot.spend;
   var roas = tot.spend > 0 ? (tot.revenue / tot.spend) : 0;
   var cpp = tot.purchases > 0 ? (tot.spend / tot.purchases) : 0;
+  var cpc = tot.conversations > 0 ? (tot.spend / tot.conversations) : 0;
 
   document.getElementById('kSpend').textContent = fmtMoney(tot.spend);
   document.getElementById('kRevenue').textContent = fmtMoney(tot.revenue);
@@ -709,6 +715,7 @@ function render(){
   document.getElementById('kPurch').textContent = fmtInt(tot.purchases);
   document.getElementById('kConv').textContent = fmtInt(tot.conversations);
   document.getElementById('kCpp').textContent = fmtMoney(cpp);
+  document.getElementById('kCpc').textContent = fmtMoney(cpc);
 
   document.getElementById('kSpendSub').textContent = dates.length + ' วัน';
   document.getElementById('kRevenueSub').textContent = tot.revenue>0 ? 'อิงยอดขายจาก Facebook Pixel' : 'ยังไม่มียอดขายในช่วงนี้';
