@@ -155,6 +155,13 @@ footer b{color:var(--pink-dark)}
   .sidebar{transform:translateX(-100%);transition:transform .2s ease}
   .sidebar.open{transform:translateX(0)}
   .content-wrap{margin-left:0;padding-top:54px}
+  .lb-row{grid-template-columns:32px 1fr 62px 62px 50px;gap:6px;padding:10px 10px}
+  .lb-row > div:nth-child(2){min-width:0}
+  .lb-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+  .lb-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px}
+  .lb-val{font-size:11px}
+  .lb-val b{font-size:9px}
+  .roas-chip{padding:3px 6px;font-size:11px}
 }
 
 /* ---- AI / Ranking / Video / Alert feature styles ---- */
