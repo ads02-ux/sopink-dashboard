@@ -1093,7 +1093,7 @@ function renderRanking(){
     var badgeTxt = i < 3 ? ['🥇','🥈','🥉'][i] : (i+1);
     var chipCls = c.roas >= 2 ? 'top' : (c.roas >= 1 ? 'mid' : 'low');
     return '<div class="lb-row"><div class="rank-badge '+badgeCls+'">'+badgeTxt+'</div>'
-      + '<div><div class="lb-name">'+c.campaign+'</div><div class="lb-meta">'+fmtInt(c.purchases)+' ออเดอร์ &middot; '+fmtInt(c.impressions)+' Impr.</div></div>'
+      + '<div><div class="lb-name">'+c.campaign+'</div><div class="lb-meta">คนซื้อ '+fmtInt(c.purchases)+' &middot; คนทัก '+fmtInt(c.conversations)+' &middot; '+fmtInt(c.impressions)+' Impr.</div></div>'
       + '<div class="lb-val"><b>Spend</b>'+fmtMoney(c.spend)+'</div><div class="lb-val"><b>Revenue</b>'+fmtMoney(c.revenue)+'</div>'
       + '<div style="text-align:right"><span class="roas-chip '+chipCls+'">'+c.roas.toFixed(2)+'x</span></div></div>';
   }).join('') + '</div>';
