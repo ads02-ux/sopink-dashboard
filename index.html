@@ -185,6 +185,17 @@ footer b{color:var(--pink-dark)}
 
 .lb-list{display:flex;flex-direction:column;gap:10px}
 .lb-row{display:grid;grid-template-columns:44px 1fr 100px 100px 90px;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px 16px}
+@media(max-width:820px){
+  .lb-row{grid-template-columns:28px 1fr 56px 56px 44px!important;gap:5px!important;padding:9px 8px!important}
+  .lb-row > div:nth-child(2){min-width:0!important}
+  .lb-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px!important}
+  .lb-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px!important}
+  .lb-val{font-size:10.5px!important}
+  .lb-val b{font-size:8.5px!important}
+  .roas-chip{padding:3px 5px!important;font-size:10.5px!important}
+  .rank-badge{width:26px!important;height:26px!important;font-size:14px!important}
+}
+
 .rank-badge{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;font-family:'Prompt',sans-serif;font-weight:800;font-size:14px;color:#fff}
 .rank-badge.r1{background:linear-gradient(135deg,#ffd76a,#e0a825)}
 .rank-badge.r2{background:linear-gradient(135deg,#d7dbe3,#9aa2b1)}
