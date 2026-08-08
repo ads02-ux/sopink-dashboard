@@ -334,9 +334,9 @@ footer b{color:var(--pink-dark)}
 .camp-creative-card a{display:block;position:relative}
 .camp-creative-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);color:#fff;font-size:20px}
 .camp-creative-thumb-btn{cursor:pointer;display:block;position:relative}
-.camp-video-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+.camp-video-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .camp-video-modal-overlay.open{display:flex}
-.camp-video-modal{background:#000;border-radius:12px;overflow:hidden;max-width:560px;width:100%;position:relative}
+.camp-video-modal{background:#000;border-radius:12px;overflow:hidden;max-width:420px;width:100%;position:relative;margin:auto}
 .camp-video-modal-close{position:absolute;top:-36px;right:0;background:none;border:none;color:#fff;font-size:26px;cursor:pointer;line-height:1}
 .camp-creative-card img{width:100%;height:80px;object-fit:cover;display:block}
 .camp-creative-ph{width:100%;height:80px;display:flex;align-items:center;justify-content:center;background:var(--pink-pale);font-size:20px}
@@ -1618,11 +1618,29 @@ function ensureCampVideoModal(){
   document.body.appendChild(overlay);
   document.getElementById('campVideoModalClose').addEventListener('click', closeCampVideoModal);
 }
+function ensureFbSdk(cb){
+  if(window.FB){ cb(); return; }
+  window.__fbSdkCbs = window.__fbSdkCbs || [];
+  window.__fbSdkCbs.push(cb);
+  if(document.getElementById('facebook-jssdk')) return;
+  window.fbAsyncInit = function(){
+    FB.init({xfbml:true, version:'v19.0'});
+    (window.__fbSdkCbs||[]).forEach(function(f){ f(); });
+    window.__fbSdkCbs = [];
+  };
+  var js = document.createElement('script');
+  js.id = 'facebook-jssdk';
+  js.src = 'https://connect.facebook.net/en_US/sdk.js';
+  document.body.appendChild(js);
+}
 function openCampVideoModal(watchUrl){
   ensureCampVideoModal();
-  var embed = 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(watchUrl) + '&show_text=false&width=560&autoplay=true';
-  document.getElementById('campVideoModalBody').innerHTML = '<iframe src="'+embed+'" width="100%" height="315" style="border:none;display:block" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+  var body = document.getElementById('campVideoModalBody');
+  body.innerHTML = '<div class="fb-video" data-href="'+watchUrl+'" data-width="380" data-show-text="false" data-autoplay="true"></div>';
   document.getElementById('campVideoModalOverlay').classList.add('open');
+  ensureFbSdk(function(){
+    if(window.FB && window.FB.XFBML) window.FB.XFBML.parse(body);
+  });
 }
 function closeCampVideoModal(){
   var ov = document.getElementById('campVideoModalOverlay');
