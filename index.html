@@ -1709,8 +1709,10 @@ function closeCampDrawer(){
 
 function campRowsFor(days){
   var today = todayBangkok();
-  var start = days<=1 ? today : addDaysStr(today,-(days-1));
-  return rawRows.filter(function(r){ return r.campaign===campDrawerCampaign.name && r.date>=start && r.date<=today; });
+  var start, end;
+  if(days===0){ start = end = addDaysStr(today,-1); }
+  else { start = days<=1 ? today : addDaysStr(today,-(days-1)); end = today; }
+  return rawRows.filter(function(r){ return r.campaign===campDrawerCampaign.name && r.date>=start && r.date<=end; });
 }
 
 function renderCampDrawerBody(){
@@ -1720,7 +1722,7 @@ function renderCampDrawerBody(){
   var roas = t.spend>0 ? t.revenue/t.spend : 0;
   var ctr = t.impressions>0 ? (t.clicks/t.impressions*100) : 0;
 
-  var rangeOpts = [[1,'วันนี้'],[3,'3 วัน'],[7,'7 วัน'],[30,'30 วัน']];
+  var rangeOpts = [[1,'วันนี้'],[0,'เมื่อวาน'],[3,'3 วัน'],[7,'7 วัน'],[30,'30 วัน']];
   var pillsHtml = '<div class="fx-controls">' + rangeOpts.map(function(o){
     return '<button class="pill camp-range'+(o[0]===campDrawerRangeDays?' active':'')+'" data-days="'+o[0]+'">'+o[1]+'</button>';
   }).join('') + '</div>';
