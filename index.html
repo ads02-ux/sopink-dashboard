@@ -684,9 +684,17 @@ function fetchAllPages(url, accumulated){
   });
 }
 
+function isLegacyCampaignName(name){
+  var c = name || '';
+  if(c.indexOf('***')===0) return true;
+  if(/^\d+\.\s/.test(c)) return true;
+  return false;
+}
+
 function finishLoad(rows){
-  rawRows = rows;
-  dailyAgg = aggregateByDate(rows);
+  var filtered = rows.filter(function(r){ return !isLegacyCampaignName(r.campaign); });
+  rawRows = filtered;
+  dailyAgg = aggregateByDate(filtered);
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('dashContent').style.display = 'block';
   document.getElementById('lastUpdated').textContent = 'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH');
