@@ -1865,7 +1865,7 @@ function fetchCampCreatives(){
     return;
   }
   var filtering = encodeURIComponent(JSON.stringify([{field:'campaign.id', operator:'EQUAL', value:camp.id}]));
-  var url = FB_API + ACCOUNT_ID + '/ads?filtering=' + filtering + '&fields=id,name,creative{thumbnail_url,image_url,video_id},effective_object_story_id&limit=50&access_token=' + ACCOUNT_TOKEN_NAME;
+  var url = FB_API + ACCOUNT_ID + '/ads?filtering=' + filtering + '&fields=id,name,creative.thumbnail_width(600).thumbnail_height(600){thumbnail_url,image_url,video_id},effective_object_story_id&limit=50&access_token=' + ACCOUNT_TOKEN_NAME;
   fetch(url).then(function(r){return r.json();}).then(function(d){
     if(d.error || !d.data || d.data.length===0){
       grid.innerHTML = '<div class="fx-empty">ไม่พบครีเอทีฟสำหรับแคมเปญนี้</div>';
