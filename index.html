@@ -1650,7 +1650,17 @@ var campChartInst = null;
 function renderCampaignTable(start, end){
   var rows = rawRows.filter(function(r){ return r.date>=start && r.date<=end; });
   var camps = aggByCampaign(rows).map(function(c){ c.roas = c.spend>0?(c.revenue/c.spend):0; c.ctr = c.impressions>0?(c.clicks/c.impressions*100):0; return c; })
-    .sort(function(a,b){ return b.spend-a.spend; });
+    .sort(function(a,b){
+      function _campNumKey(s){
+        var m = String(s).match(/^\**\s*(\d+)(?:\.(\d+))?/);
+        if(!m) return [Infinity, Infinity];
+        return [parseInt(m[1],10), m[2]!==undefined?parseInt(m[2],10):0];
+      }
+      var ka = _campNumKey(a.campaign), kb = _campNumKey(b.campaign);
+      if(ka[0]!==kb[0]) return ka[0]-kb[0];
+      if(ka[1]!==kb[1]) return ka[1]-kb[1];
+      return b.spend-a.spend;
+    });
   var tbody = document.getElementById('campaignTable');
   if(!tbody) return;
   if(camps.length===0){
