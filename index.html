@@ -1897,7 +1897,7 @@ function fetchCampCreatives(){
         var cr = ad.creative || {};
         var vid = cr.video_id;
         if(vid){ openCampVideoModal('https://www.facebook.com/watch/?v=' + vid); return; }
-        var imgUrl = cr.thumbnail_url || cr.image_url || '';
+        var imgUrl = cr.image_url || cr.thumbnail_url || '';
         if(imgUrl) openCampImageModal(imgUrl);
       });
     });
