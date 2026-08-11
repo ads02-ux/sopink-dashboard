@@ -1850,6 +1850,12 @@ function closeCampVideoModal(){
   if(ov){ ov.classList.remove('open'); var b=document.getElementById('campVideoModalBody'); if(b) b.innerHTML=''; }
 }
 
+function openCampImageModal(imgUrl){
+  ensureCampVideoModal();
+  var body = document.getElementById('campVideoModalBody');
+  body.innerHTML = '<img src="'+imgUrl+'" style="max-width:100%;max-height:80vh;display:block;border-radius:8px;margin:0 auto">';
+  document.getElementById('campVideoModalOverlay').classList.add('open');
+}
 function fetchCampCreatives(){
   var grid = document.getElementById('campCreativesGrid');
   grid.innerHTML = '<div class="fx-empty">⏳ กำลังดึงข้อมูล...</div>';
@@ -1875,10 +1881,8 @@ function fetchCampCreatives(){
       var imgTag = img ? '<img src="'+img+'" onerror="this.style.display=\'none\'">' : '<div class="camp-creative-ph">🎬</div>';
       var playBadge = vid ? '<div class="camp-creative-play">▶</div>' : '';
       var thumbHtml;
-      if(vid){
+      if(vid || img){
         thumbHtml = '<div class="camp-creative-thumb-btn" data-idx="'+idx+'">'+imgTag+playBadge+'</div>';
-      } else if(link){
-        thumbHtml = '<a href="'+link+'" target="_blank" rel="noopener">'+imgTag+'</a>';
       } else {
         thumbHtml = imgTag;
       }
@@ -1890,8 +1894,11 @@ function fetchCampCreatives(){
     grid.querySelectorAll('.camp-creative-thumb-btn').forEach(function(elm){
       elm.addEventListener('click', function(){
         var ad = window.__campCreativeAds[parseInt(this.dataset.idx)];
-        var vid = ad.creative && ad.creative.video_id;
-        if(vid) openCampVideoModal('https://www.facebook.com/watch/?v=' + vid);
+        var cr = ad.creative || {};
+        var vid = cr.video_id;
+        if(vid){ openCampVideoModal('https://www.facebook.com/watch/?v=' + vid); return; }
+        var imgUrl = cr.thumbnail_url || cr.image_url || '';
+        if(imgUrl) openCampImageModal(imgUrl);
       });
     });
   }).catch(function(err){
