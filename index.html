@@ -1455,8 +1455,11 @@ function renderVideo(){
 
 function fbBreakdownUrl(breakdowns, days){
   var today = todayBangkok();
-  var start = days<=1 ? today : addDaysStr(today, -(days-1));
-  var timeRange = encodeURIComponent(JSON.stringify({since:start, until:today}));
+  var until = today;
+  var start;
+  if(days === -1){ start = addDaysStr(today,-1); until = start; }
+  else { start = days<=1 ? today : addDaysStr(today, -(days-1)); }
+  var timeRange = encodeURIComponent(JSON.stringify({since:start, until:until}));
   var fields = 'spend,impressions,actions,action_values';
   return FB_API + ACCOUNT_ID + '/insights?fields=' + fields
     + '&level=account&breakdowns=' + breakdowns
@@ -1514,7 +1517,7 @@ function loadBuyersData(){
 function renderBuyersUI(){
   var el = document.getElementById('buyersBody');
   if(!el || !buyersData) return;
-  var rangeOpts = [[7,'7 วัน'],[14,'14 วัน'],[30,'30 วัน'],[90,'90 วัน']];
+  var rangeOpts = [[1,'วันนี้'],[-1,'เมื่อวาน'],[3,'3 วัน'],[7,'7 วัน'],[14,'14 วัน'],[30,'30 วัน'],[90,'90 วัน']];
   var controlsHtml = '<div class="fx-controls"><span class="ctrl-label">ช่วงเวลา:</span>'
     + rangeOpts.map(function(o){ return '<button class="pill bd-range'+(o[0]===buyersRangeDays?' active':'')+'" data-days="'+o[0]+'">'+o[1]+'</button>'; }).join('') + '</div>';
 
