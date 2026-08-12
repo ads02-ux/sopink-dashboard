@@ -1747,6 +1747,9 @@ function renderCampDrawerBody(){
     + campKpiCard('ROAS', roas.toFixed(2)+'x', roas>=2?'#1fb872':(roas>=1?'#d4a339':'#e5484d'))
     + campKpiCard('CTR', ctr.toFixed(2)+'%', '#3a1a2a')
     + campKpiCard('การสนทนา', fmtInt(t.conversations)+' ครั้ง', '#3a1a2a')
+    + campKpiCard('ต้นทุนต่อการสนทนา', fmtMoney(t.conversations>0 ? t.spend/t.conversations : 0), '#3a1a2a')
+    + campKpiCard('การซื้อ', fmtInt(t.purchases)+' ครั้ง', '#3a1a2a')
+    + campKpiCard('ต้นทุนการซื้อ', fmtMoney(t.purchases>0 ? t.spend/t.purchases : 0), '#3a1a2a')
     + '</div>';
 
   var chartHtml = '<div class="camp-chart-wrap"><canvas id="campChartCanvas" height="180"></canvas></div>';
