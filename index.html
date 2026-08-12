@@ -420,6 +420,7 @@ footer b{color:var(--pink-dark)}
   <div class="filterbar" id="filterBar">
     <button class="pill" data-range="today">วันนี้</button>
     <button class="pill" data-range="yesterday">เมื่อวาน</button>
+    <button class="pill" data-range="3d">3 วัน</button>
     <button class="pill active" data-range="7d">7 วัน</button>
     <button class="pill" data-range="30d">30 วัน</button>
     <button class="pill" data-range="all">ทั้งหมด (90 วัน)</button>
@@ -697,6 +698,7 @@ function getRangeDates(range){
   var today = todayBangkok();
   if(range === 'today') return [today, today];
   if(range === 'yesterday'){ var y = addDaysStr(today,-1); return [y,y]; }
+  if(range === '3d') return [addDaysStr(today,-2), today];
   if(range === '7d') return [addDaysStr(today,-6), today];
   if(range === '30d') return [addDaysStr(today,-29), today];
   return [addDaysStr(today,-89), today]; // all
