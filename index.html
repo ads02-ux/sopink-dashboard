@@ -393,6 +393,7 @@ footer b{color:var(--pink-dark)}
       <div class="sb-item" data-view="ai-content"><span class="sb-icon">🤖</span>AI แนะนำคอนเทนต์</div>
       <div class="sb-item" data-view="ai-ads"><span class="sb-icon">📈</span>AI วิเคราะห์ ADS</div>
       <div class="sb-item" data-view="video"><span class="sb-icon">🎬</span>วิเคราะห์วีดีโอ</div>
+      <div class="sb-item" data-view="image"><span class="sb-icon">🖼️</span>วิเคราะห์รูปภาพ</div>
       <div class="sb-item" data-view="ranking"><span class="sb-icon">🏆</span>ชาร์ตอันดับ</div>
       <div class="sb-item" data-view="buyers"><span class="sb-icon">👥</span>ข้อมูลผู้ซื้อ</div>
       <div class="sb-item" data-view="alert"><span class="sb-icon">🔔</span>Alert การแจ้งเตือน</div>
@@ -541,6 +542,14 @@ footer b{color:var(--pink-dark)}
     <div class="fx-title">🎬 วิเคราะห์วีดีโอ</div>
     <div class="fx-sub">อัตราการดูจบและ Hook Rate ของแต่ละแคมเปญวิดีโอ (30 วันล่าสุด)</div>
     <div id="videoBody"><div class="fx-empty">กำลังโหลดข้อมูลวิดีโอ...</div></div>
+  </div>
+</div>
+
+<div id="view-image" style="display:none">
+  <div class="fx-panel">
+    <div class="fx-title">🖼️ วิเคราะห์รูปภาพ</div>
+    <div class="fx-sub">วิเคราะห์ผลลัพธ์ CTR และคอนเวอร์ชันของแต่ละครีเอทีฟรูปภาพ (30 วันล่าสุด)</div>
+    <div id="imageBody"><div class="fx-empty">กำลังโหลดข้อมูลรูปภาพ...</div></div>
   </div>
 </div>
 
@@ -792,7 +801,7 @@ document.getElementById('refreshBtn').addEventListener('click', function(){
   setTimeout(function(){ self.classList.remove('spin'); }, 800);
 });
 
-var ALL_VIEWS = ['dashboard','ai-content','ai-ads','video','ranking','buyers','alert'];
+var ALL_VIEWS = ['dashboard','ai-content','ai-ads','video','image','ranking','buyers','alert'];
 var loadedViews = {};
 
 function last30Rows(){
@@ -1453,6 +1462,242 @@ function renderVideo(){
   });
 }
 
+var ifAllData = [];
+
+function ifFetchInsights(){
+  var now = new Date();
+  var since = new Date(now); since.setDate(since.getDate()-29);
+  var fields = 'ad_id,ad_name,spend,impressions,reach,frequency,clicks,ctr,cpc,cpm,actions,action_values';
+  var timeRange = encodeURIComponent(JSON.stringify({since:toYMD(since), until:toYMD(now)}));
+  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields + '&level=ad&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
+  return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+}
+function ifFetchCreatives(){
+  var url = FB_API + ACCOUNT_ID + '/ads?fields=id,name,created_time,creative{thumbnail_url,video_id}&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
+  return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+}
+function ifMerge(ins, crvs){
+  var cm = {};
+  crvs.forEach(function(c){ cm[c.id] = c; });
+  var priority = ['omni_purchase','purchase','offsite_conversion.fb_pixel_purchase','lead','onsite_conversion.lead_grouped','link_click'];
+  return ins.map(function(row){
+    var cr = cm[row.ad_id] || {};
+    var results = 0;
+    if(row.actions){
+      for(var p=0;p<priority.length;p++){
+        var rv = vfGetA(row.actions, priority[p]);
+        if(rv>0){ results = rv; break; }
+      }
+    }
+    var created = cr.created_time ? new Date(cr.created_time) : null;
+    var days = created ? Math.floor((Date.now()-created.getTime())/86400000) : 0;
+    return {
+      adId: row.ad_id,
+      name: (cr.name || row.ad_name || 'ไม่ระบุ').substring(0,60),
+      thumb: (cr.creative && cr.creative.thumbnail_url) ? cr.creative.thumbnail_url : '',
+      isVideo: !!(cr.creative && cr.creative.video_id),
+      spend: parseFloat(row.spend)||0,
+      imp: parseInt(row.impressions)||0,
+      reach: parseInt(row.reach)||0,
+      frequency: parseFloat(row.frequency)||0,
+      clicks: parseInt(row.clicks)||0,
+      ctr: parseFloat(row.ctr)||0,
+      cpc: parseFloat(row.cpc)||0,
+      cpm: parseFloat(row.cpm)||0,
+      results: results, days: days,
+      score:0, verdict:'', vcolor:'', quad:'', qx:0, qy:0
+    };
+  }).filter(function(d){ return !d.isVideo; });
+}
+function ifCalc(data){
+  if(!data.length) return;
+  data.forEach(function(d){
+    d.convRate = d.imp>0 ? d.results/d.imp : 0;
+    d.cpa = d.results>0 ? d.spend/d.results : 0;
+  });
+  var avgCtr = data.reduce(function(s,d){return s+d.ctr;},0)/data.length;
+  var avgC = data.reduce(function(s,d){return s+d.convRate;},0)/data.length;
+  var medCtr = vfMed(data.map(function(d){return d.ctr;}));
+  data.forEach(function(d){
+    d.qx = avgCtr>0 ? d.ctr/avgCtr : 1;
+    d.qy = avgC>0 ? d.convRate/avgC : 1;
+    var ctrS = Math.min(50, medCtr>0 ? d.ctr/medCtr*35 : 0);
+    var cS = Math.min(40, avgC>0 ? d.convRate/avgC*30 : 0);
+    var freqB = Math.min(10, d.frequency>0 ? Math.max(0, 10-(d.frequency-2)*3) : 5);
+    d.score = Math.round(Math.min(100, ctrS+cS+freqB));
+    if(d.qx>=1 && d.qy>=1){ d.verdict='ครีเอทีฟดี คอนเวอร์ชันดี'; d.vcolor='#10b981'; d.quad='ขยายผล'; }
+    else if(d.qx>=1){ d.verdict='คนสนใจแต่ปิดการขายไม่ได้'; d.vcolor='#f59e0b'; d.quad='แก้ CTA'; }
+    else if(d.qy>=1){ d.verdict='คนไม่ค่อยสนใจแต่ที่คลิกแล้วซื้อดี'; d.vcolor='#3b82f6'; d.quad='แก้รูป/CTR'; }
+    else{ d.verdict='ครีเอทีฟไม่ดึงดูด'; d.vcolor='#f87171'; d.quad='พิจารณาปิด'; }
+  });
+}
+function ifFilteredData(){
+  var showLowEl = document.getElementById('ifShowLow');
+  var showLow = showLowEl && showLowEl.checked;
+  var d = ifAllData.slice();
+  if(!showLow){
+    var ms = parseFloat((document.getElementById('ifMinSpend')||{}).value)||0;
+    var mi = parseFloat((document.getElementById('ifMinImpr')||{}).value)||0;
+    d = d.filter(function(x){ return x.spend>=ms && x.imp>=mi; });
+  }
+  return d;
+}
+function ifRenderFiltered(){
+  var d = ifFilteredData();
+  ifCards(d); ifBanner(d); ifMini(d); ifQuad(d); ifTbl(d);
+}
+function ifCards(d){
+  var sp = d.reduce(function(s,x){return s+x.spend;},0);
+  var rs = d.reduce(function(s,x){return s+x.results;},0);
+  var medCtr = vfMed(d.map(function(x){return x.ctr;}));
+  var cards = [
+    {icon:'🔥', label:'ยอดใช้จ่ายรูปภาพ', val:fmtMoney(sp), sub:'รวมทุกรูปที่เลือก'},
+    {icon:'🎯', label:'ค่ากลาง CTR', val:medCtr.toFixed(2)+'%', sub:'จาก '+d.length+' รูปที่ผ่านเกณฑ์'},
+    {icon:'📈', label:'ผลลัพธ์', val:vfFmtN(rs), sub:'ต้นทุน/ผลลัพธ์: '+(rs>0?fmtMoney(sp/rs):'—')},
+    {icon:'🖼️', label:'รูปที่วิเคราะห์แล้ว', val:d.length, sub:'ข้อมูลไม่พอ '+(ifAllData.length-d.length)+' ตัว'}
+  ];
+  document.getElementById('ifCards').innerHTML = cards.map(function(c){
+    return '<div class="vf-card"><div class="lbl">'+c.icon+' '+c.label+'</div><div class="val">'+c.val+'</div><div class="sub">'+c.sub+'</div></div>';
+  }).join('');
+}
+function ifBanner(d){
+  var sc = d.filter(function(x){return x.quad==='ขยายผล';});
+  var el = document.getElementById('ifBanner');
+  if(sc.length){
+    el.innerHTML = '<div class="vf-banner" id="ifBannerBtn">📈 รูปภาพที่ครีเอทีฟดีคอนเวอร์ชันดี '+sc.length+' ตัว — ขยายผลต่อได้เลย</div>';
+    var b = document.getElementById('ifBannerBtn');
+    if(b) b.addEventListener('click', function(){ var t=document.getElementById('ifTblWrap'); if(t) t.scrollIntoView({behavior:'smooth'}); });
+  } else el.innerHTML = '';
+}
+function ifMini(d){
+  var sc = d.filter(function(x){return x.quad==='ขยายผล';}).length;
+  var wi = d.filter(function(x){return x.score>=55;}).length;
+  var t = d.length||1;
+  var items = [
+    {icon:'🚀', label:'เปิดตัวใหม่', val:d.length},
+    {icon:'📊', label:'ขยายแล้ว', val:sc},
+    {icon:'🏆', label:'ตัวชนะ', val:wi},
+    {icon:'🎯', label:'อัตราชนะ', val: wi+'/'+t+' · '+Math.round(wi/t*100)+'%'}
+  ];
+  document.getElementById('ifMini').innerHTML = items.map(function(c){
+    return '<div class="vf-mini-card"><div class="val">'+c.val+'</div><div class="lbl">'+c.icon+' '+c.label+'</div></div>';
+  }).join('');
+}
+function ifQuad(d){
+  var wrap = document.getElementById('ifQuadWrap');
+  if(!d.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  var canvas = document.getElementById('ifCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height, pad = {l:50,r:20,t:16,b:40};
+  var pW = W-pad.l-pad.r, pH = H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  var mn=0.25, mx=3;
+  function toX(v){ return pad.l + (Math.min(mx,Math.max(mn,v))-mn)/(mx-mn)*pW; }
+  function toY(v){ return pad.t + pH - (Math.min(mx,Math.max(mn,v))-mn)/(mx-mn)*pH; }
+  var px = toX(1), py = toY(1);
+  ctx.fillStyle='rgba(16,185,129,.10)'; ctx.fillRect(px,pad.t,W-px-pad.r,py-pad.t);
+  ctx.fillStyle='rgba(59,130,246,.10)'; ctx.fillRect(pad.l,pad.t,px-pad.l,py-pad.t);
+  ctx.fillStyle='rgba(245,158,11,.10)'; ctx.fillRect(px,py,W-px-pad.r,H-py-pad.b);
+  ctx.fillStyle='rgba(248,113,113,.10)'; ctx.fillRect(pad.l,py,px-pad.l,H-py-pad.b);
+  ctx.strokeStyle='#ccc'; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(px,pad.t); ctx.lineTo(px,pad.t+pH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l,py); ctx.lineTo(pad.l+pW,py); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font='10px sans-serif'; ctx.fillStyle='#999';
+  [0.25,0.95,1.65,3].forEach(function(v){
+    ctx.textAlign='center'; ctx.fillText(v, toX(v), H-pad.b+14);
+    ctx.textAlign='right'; ctx.fillText(v, pad.l-6, toY(v)+3);
+  });
+  ctx.font='11px sans-serif'; ctx.fillStyle='#888'; ctx.textAlign='center';
+  ctx.fillText('CTR เทียบค่าปกติของบัญชี (เท่า)', pad.l+pW/2, H-4);
+  ctx.save(); ctx.translate(12,pad.t+pH/2); ctx.rotate(-Math.PI/2); ctx.fillText('คอนเวอร์ชันเทียบค่าปกติ (เท่า)',0,0); ctx.restore();
+  ctx.font='10px sans-serif';
+  ctx.fillStyle='#065f46'; ctx.textAlign='left'; ctx.fillText('ขยายผล', px+6, pad.t+12);
+  ctx.fillStyle='#1e40af'; ctx.fillText('แก้รูป/CTR', pad.l+6, pad.t+12);
+  ctx.fillStyle='#92400e'; ctx.fillText('แก้ CTA', px+6, H-pad.b-6);
+  ctx.fillStyle='#991b1b'; ctx.fillText('พิจารณาปิด', pad.l+6, H-pad.b-6);
+  var maxSp = Math.max.apply(null, d.map(function(x){return x.spend||1;}));
+  var top = d.slice().sort(function(a,b){return b.score-a.score;}).slice(0,60);
+  top.forEach(function(p,pi){
+    var ang = pi*2.399963;
+    var rj = Math.sqrt(pi+1)*6;
+    var jx = Math.cos(ang)*rj, jy = Math.sin(ang)*rj;
+    var x = toX(p.qx)+jx, y = toY(p.qy)+jy;
+    var r = Math.max(2, Math.sqrt((p.spend||1)/maxSp)*10);
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = p.vcolor; ctx.globalAlpha=0.75; ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+  });
+  document.getElementById('ifLegend').innerHTML =
+    '<b>การกระจายผลตัดสิน</b>'
+    + '<div>📈 '+d.filter(function(x){return x.quad==='ขยายผล';}).length+' ขยายผล — CTR ดี คอนเวอร์ชันดี</div>'
+    + '<div>✓ '+d.filter(function(x){return x.quad==='แก้ CTA';}).length+' แก้ CTA — CTR ดี คอนเวอร์ชันอ่อน</div>'
+    + '<div>✓ '+d.filter(function(x){return x.quad==='แก้รูป/CTR';}).length+' แก้รูป/CTR — คอนเวอร์ชันดี CTR อ่อน</div>'
+    + '<div>✗ '+d.filter(function(x){return x.quad==='พิจารณาปิด';}).length+' พิจารณาปิด — อ่อนทั้ง CTR และคอนเวอร์ชัน</div>';
+}
+function ifTbl(d){
+  var wrap = document.getElementById('ifTblWrap');
+  if(!d.length){ wrap.innerHTML = '<div class="fx-empty">ไม่พบรูปภาพที่ผ่านเกณฑ์</div>'; return; }
+  var srt = d.slice().sort(function(a,b){return b.score-a.score;});
+  var hdrs = ['ครีเอทีฟ','วันรัน','คะแนน','ผลประเมิน','ยอดใช้จ่าย','อิมเพรสชัน','การเข้าถึง','ความถี่','CTR %','CPC','CPM','คลิก','ผลลัพธ์','ต้นทุน/ผลลัพธ์'];
+  var html = '<table class="vf-tbl"><thead><tr>' + hdrs.map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead><tbody>';
+  srt.forEach(function(d0){
+    var scColor = d0.score>=55?'#10b981':(d0.score>=45?'#f59e0b':'#f87171');
+    var qIcon = d0.quad==='ขยายผล' ? '📈 ' : (d0.quad==='พิจารณาปิด' ? '✗ ' : '✓ ');
+    var thumbHtml = d0.thumb ? '<img class="vf-thumb" src="'+d0.thumb+'" onerror="this.style.display=\'none\'">' : '<div class="vf-thumb-ph">🖼️</div>';
+    html += '<tr><td><div class="vf-name-cell">'+thumbHtml+'<span class="vf-name-text" title="'+d0.name+'">'+d0.name+'</span></div></td>'
+      + '<td>'+d0.days+'</td>'
+      + '<td><span class="vf-score-badge" style="background:'+scColor+'">'+d0.score+'</span></td>'
+      + '<td style="color:'+d0.vcolor+';font-weight:700">'+qIcon+d0.verdict+'</td>'
+      + '<td>'+(d0.spend>0?fmtMoney(d0.spend):'—')+'</td>'
+      + '<td>'+fmtInt(d0.imp)+'</td>'
+      + '<td>'+fmtInt(d0.reach)+'</td>'
+      + '<td>'+d0.frequency.toFixed(2)+'</td>'
+      + '<td>'+d0.ctr.toFixed(2)+'%</td>'
+      + '<td>'+(d0.cpc>0?fmtMoney(d0.cpc):'—')+'</td>'
+      + '<td>'+(d0.cpm>0?fmtMoney(d0.cpm):'—')+'</td>'
+      + '<td>'+fmtInt(d0.clicks)+'</td>'
+      + '<td>'+vfFmtN(d0.results)+'</td>'
+      + '<td>'+(d0.cpa>0?fmtMoney(d0.cpa):'—')+'</td></tr>';
+  });
+  wrap.innerHTML = html + '</tbody></table>';
+}
+function renderImage(){
+  var el = document.getElementById('imageBody');
+  el.innerHTML = ''
+    + '<div class="vf-filterbar">'
+    +   '<span><label>ยอดใช้จ่ายขั้นต่ำ (฿)</label><input type="number" id="ifMinSpend" value="1000"></span>'
+    +   '<span><label>อิมเพรสชันขั้นต่ำ</label><input type="number" id="ifMinImpr" value="1000"></span>'
+    +   '<div class="vf-toggle-wrap"><label class="vf-switch"><input type="checkbox" id="ifShowLow"><span class="vf-slider"></span></label><span style="font-size:12px;color:var(--text-soft)">แสดงรูปภาพที่ข้อมูลยังน้อย</span></div>'
+    + '</div>'
+    + '<div id="ifCards" class="vf-cards"><div class="fx-empty" style="grid-column:1/-1">⏳ กำลังโหลดข้อมูลรูปภาพ...</div></div>'
+    + '<div id="ifBanner"></div>'
+    + '<div id="ifMini" class="vf-mini"></div>'
+    + '<div id="ifQuadWrap" class="vf-quad-wrap" style="display:none">'
+    +   '<div class="vf-quad-title">ควอดรันต์ CTR × คอนเวอร์ชัน</div>'
+    +   '<div class="vf-quad-sub">แต่ละจุดคือหนึ่งรูปภาพ ขนาดจุด = งบที่ใช้ &middot; คลิกจุดเพื่อไปยังแถวนั้น</div>'
+    +   '<div class="vf-quad-flex">'
+    +     '<canvas id="ifCanvas" width="560" height="420"></canvas>'
+    +     '<div class="vf-quad-legend" id="ifLegend"></div>'
+    +   '</div>'
+    + '</div>'
+    + '<div id="ifTblWrap" style="overflow-x:auto"></div>';
+
+  document.getElementById('ifMinSpend').addEventListener('change', ifRenderFiltered);
+  document.getElementById('ifMinImpr').addEventListener('change', ifRenderFiltered);
+  document.getElementById('ifShowLow').addEventListener('change', ifRenderFiltered);
+
+  Promise.all([ifFetchInsights(), ifFetchCreatives()]).then(function(res){
+    var merged = ifMerge(res[0], res[1]);
+    ifAllData = merged.filter(function(d){ return d.imp > 0; });
+    ifCalc(ifAllData);
+    ifRenderFiltered();
+  }).catch(function(err){
+    el.innerHTML += '<div class="fx-empty">โหลดข้อมูลรูปภาพไม่สำเร็จ: '+err.message+'</div>';
+  });
+}
+
 function fbBreakdownUrl(breakdowns, days){
   var today = todayBangkok();
   var until = today;
@@ -1617,6 +1862,7 @@ var VIEW_RENDERERS = {
   'ai-content': renderAIContent,
   'ai-ads': renderAIAds,
   'video': renderVideo,
+  'image': renderImage,
   'ranking': renderRanking,
   'buyers': loadBuyersData,
   'alert': renderAlert
