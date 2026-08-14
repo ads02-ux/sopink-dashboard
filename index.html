@@ -1990,6 +1990,7 @@ function renderCampDrawerBody(){
 
   var kpiHtml = '<div class="camp-kpi-grid">'
     + campKpiCard('Spend', fmtMoney(t.spend), '#e6127a')
+    + campKpiCard('ยอดขาย', fmtMoney(t.revenue), '#1fb872')
     + campKpiCard('ROAS', roas.toFixed(2)+'x', roas>=2?'#1fb872':(roas>=1?'#d4a339':'#e5484d'))
     + campKpiCard('CTR', ctr.toFixed(2)+'%', '#3a1a2a')
     + campKpiCard('การสนทนา', fmtInt(t.conversations)+' ครั้ง', '#3a1a2a')
@@ -2026,6 +2027,7 @@ function drawCampChart(rows){
   var byDate = aggregateByDate(rows);
   var dates = Object.keys(byDate).sort();
   var spendSeries = dates.map(function(d){ return byDate[d].spend; });
+  var revenueSeries = dates.map(function(d){ return byDate[d].revenue; });
   var roasSeries = dates.map(function(d){ var m=byDate[d]; return m.spend>0 ? m.revenue/m.spend : 0; });
   var ctx = document.getElementById('campChartCanvas').getContext('2d');
   if(campChartInst) campChartInst.destroy();
@@ -2034,6 +2036,7 @@ function drawCampChart(rows){
       labels: dates,
       datasets: [
         {type:'bar', label:'Spend', data:spendSeries, backgroundColor:'rgba(230,18,122,.55)', yAxisID:'y'},
+        {type:'bar', label:'ยอดขาย', data:revenueSeries, backgroundColor:'rgba(31,184,114,.55)', yAxisID:'y'},
         {type:'line', label:'ROAS', data:roasSeries, borderColor:'#d4a339', backgroundColor:'transparent', yAxisID:'y1', tension:.3, pointRadius:2}
       ]
     },
