@@ -531,7 +531,7 @@ footer b{color:var(--pink-dark)}
       <div style="overflow-x:auto">
         <table>
           <thead>
-            <tr><th>เปิด/ปิด</th><th>แคมเปญ</th><th>สถานะ</th><th class="num">Spend</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Purchases</th><th class="num">Revenue</th><th class="num">ROAS</th><th>งบ/วัน</th></tr>
+            <tr><th>เปิด/ปิด</th><th>แคมเปญ</th><th>สถานะ</th><th class="num">Spend</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Purchases</th><th class="num">การสนทนา</th><th class="num">Revenue</th><th class="num">ROAS</th><th class="num">ต้นทุนการสนทนา</th><th class="num">ต้นทุนการซื้อ</th><th>งบ/วัน</th></tr>
           </thead>
           <tbody id="campaignTable"></tbody>
         </table>
@@ -2196,11 +2196,13 @@ function renderCampaignTable(start, end){
   var tbody = document.getElementById('campaignTable');
   if(!tbody) return;
   if(camps.length===0){
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลแคมเปญในช่วงที่เลือก</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลแคมเปญในช่วงที่เลือก</td></tr>';
     return;
   }
   tbody.innerHTML = camps.map(function(c){
     var cid = c.campaignId||'';
+    var costPerConv = c.conversations>0 ? (c.spend/c.conversations) : 0;
+    var costPerPurch = c.purchases>0 ? (c.spend/c.purchases) : 0;
     return '<tr class="camp-tbl-row" data-name="'+c.campaign.replace(/"/g,'&quot;')+'" data-id="'+cid+'">'
       + '<td>'+(cid?campToggleCellHtml(cid):'')+'</td>'
       + '<td><span class="ell" title="'+c.campaign.replace(/"/g,'&quot;')+'">'+c.campaign+'</span></td>'
@@ -2209,8 +2211,11 @@ function renderCampaignTable(start, end){
       + '<td class="num">'+fmtInt(c.impressions)+'</td>'
       + '<td class="num">'+c.ctr.toFixed(2)+'%</td>'
       + '<td class="num">'+fmtInt(c.purchases)+'</td>'
+      + '<td class="num">'+fmtInt(c.conversations)+'</td>'
       + '<td class="num">'+fmtMoney(c.revenue)+'</td>'
       + '<td class="num">'+c.roas.toFixed(2)+'x</td>'
+      + '<td class="num">'+(costPerConv>0?fmtMoney(costPerConv):'—')+'</td>'
+      + '<td class="num">'+(costPerPurch>0?fmtMoney(costPerPurch):'—')+'</td>'
       + '<td>'+(cid?campBudgetCellHtml(cid):'')+'</td>'
       + '</tr>';
   }).join('');
