@@ -396,6 +396,12 @@ footer b{color:var(--pink-dark)}
 .campaction-actions{display:flex;gap:8px;justify-content:flex-end}
 .campaction-btn{padding:9px 16px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:13px;cursor:pointer}
 .campaction-btn.primary{border:none;background:var(--pink);color:#fff}
+
+.camp-th-drag{cursor:grab;position:relative;user-select:none}
+.camp-th-drag:active{cursor:grabbing}
+.col-drag-handle{margin-left:6px;opacity:.45;font-size:11px}
+.camp-th-drag.col-dragging{opacity:.4}
+.camp-th-drag.col-dragover{background:var(--pink-pale);box-shadow:inset 0 0 0 2px var(--pink)}
 </style>
 </head>
 <body>
@@ -527,11 +533,11 @@ footer b{color:var(--pink-dark)}
   </div>
 
   <div class="panel">
-      <h2>📋 รายการแคมเปญ <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(คลิกแถวเพื่อดูรายละเอียด)</span></h2>
+      <h2>📋 รายการแคมเปญ <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(คลิกแถวเพื่อดูรายละเอียด ลากหัวคอลัมน์เพื่อย้ายลำดับ)</span> <button id="campColResetBtn" type="button" style="margin-left:8px;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--pink-dark);cursor:pointer">↺ รีเซ็ตคอลัมน์</button></h2>
       <div style="overflow-x:auto">
         <table>
           <thead>
-            <tr><th>เปิด/ปิด</th><th>แคมเปญ</th><th>สถานะ</th><th class="num">Spend</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Purchases</th><th class="num">การสนทนา</th><th class="num">Revenue</th><th class="num">ROAS</th><th class="num">ต้นทุนการสนทนา</th><th class="num">ต้นทุนการซื้อ</th><th>งบ/วัน</th></tr>
+            <tr id="campTableHeadRow"></tr>
           </thead>
           <tbody id="campaignTable"></tbody>
         </table>
@@ -2179,7 +2185,93 @@ function finishBudgetUpdate(act, allOk, lastErr, isDaily){
   render();
 }
 
+var campColumnDefs = {
+  toggle: {label:'เปิด/ปิด', cell:function(c){ return c.campaignId?campToggleCellHtml(c.campaignId):''; }},
+  name: {label:'แคมเปญ', cell:function(c){ return '<span class="ell" title="'+c.campaign.replace(/"/g,'&quot;')+'">'+c.campaign+'</span>'; }},
+  status: {label:'สถานะ', cell:function(c){ return c.campaignId?campStatusCellHtml(c.campaignId):''; }},
+  spend: {label:'Spend', thClass:'num', tdClass:'num', cell:function(c){ return fmtMoney(c.spend); }},
+  impressions: {label:'Impressions', thClass:'num', tdClass:'num', cell:function(c){ return fmtInt(c.impressions); }},
+  ctr: {label:'CTR', thClass:'num', tdClass:'num', cell:function(c){ return c.ctr.toFixed(2)+'%'; }},
+  purchases: {label:'Purchases', thClass:'num', tdClass:'num', cell:function(c){ return fmtInt(c.purchases); }},
+  conversations: {label:'การสนทนา', thClass:'num', tdClass:'num', cell:function(c){ return fmtInt(c.conversations); }},
+  revenue: {label:'Revenue', thClass:'num', tdClass:'num', cell:function(c){ return fmtMoney(c.revenue); }},
+  roas: {label:'ROAS', thClass:'num', tdClass:'num', cell:function(c){ return c.roas.toFixed(2)+'x'; }},
+  costPerConv: {label:'ต้นทุนการสนทนา', thClass:'num', tdClass:'num', cell:function(c){ var v = c.conversations>0?(c.spend/c.conversations):0; return v>0?fmtMoney(v):'—'; }},
+  costPerPurch: {label:'ต้นทุนการซื้อ', thClass:'num', tdClass:'num', cell:function(c){ var v = c.purchases>0?(c.spend/c.purchases):0; return v>0?fmtMoney(v):'—'; }},
+  budget: {label:'งบ/วัน', cell:function(c){ return c.campaignId?campBudgetCellHtml(c.campaignId):''; }}
+};
+var campColOrderDefault = ['toggle','name','status','spend','impressions','ctr','purchases','conversations','revenue','roas','costPerConv','costPerPurch','budget'];
+var campColOrder = (function(){
+  try{
+    var saved = JSON.parse(localStorage.getItem('campColOrder')||'null');
+    if(saved && Array.isArray(saved) && saved.length===campColOrderDefault.length && saved.every(function(k){ return !!campColumnDefs[k]; }) && campColOrderDefault.every(function(k){ return saved.indexOf(k)!==-1; })) return saved;
+  }catch(e){}
+  return campColOrderDefault.slice();
+})();
+
+function renderCampTableHead(){
+  var tr = document.getElementById('campTableHeadRow');
+  if(!tr) return;
+  tr.innerHTML = campColOrder.map(function(key){
+    var def = campColumnDefs[key];
+    if(!def) return '';
+    var cls = def.thClass ? ' class="'+def.thClass+'"' : '';
+    return '<th draggable="true" data-key="'+key+'"'+cls+' class="camp-th-drag'+(def.thClass?' '+def.thClass:'')+'">'+def.label+'<span class="col-drag-handle">⠿</span></th>';
+  }).join('');
+  bindCampColDrag(tr);
+}
+
+function bindCampColDrag(tr){
+  var dragKey = null;
+  tr.querySelectorAll('th').forEach(function(th){
+    th.addEventListener('dragstart', function(e){
+      dragKey = this.dataset.key;
+      this.classList.add('col-dragging');
+      try{ e.dataTransfer.setData('text/plain', dragKey); e.dataTransfer.effectAllowed = 'move'; }catch(err){}
+    });
+    th.addEventListener('dragend', function(){
+      this.classList.remove('col-dragging');
+      tr.querySelectorAll('th').forEach(function(t){ t.classList.remove('col-dragover'); });
+      dragKey = null;
+    });
+    th.addEventListener('dragover', function(e){
+      e.preventDefault();
+      if(this.dataset.key !== dragKey) this.classList.add('col-dragover');
+    });
+    th.addEventListener('dragleave', function(){
+      this.classList.remove('col-dragover');
+    });
+    th.addEventListener('drop', function(e){
+      e.preventDefault();
+      this.classList.remove('col-dragover');
+      var targetKey = this.dataset.key;
+      if(!dragKey || dragKey === targetKey) return;
+      var fromIdx = campColOrder.indexOf(dragKey);
+      var toIdx = campColOrder.indexOf(targetKey);
+      if(fromIdx === -1 || toIdx === -1) return;
+      campColOrder.splice(fromIdx, 1);
+      campColOrder.splice(toIdx, 0, dragKey);
+      try{ localStorage.setItem('campColOrder', JSON.stringify(campColOrder)); }catch(err){}
+      renderCampTableHead();
+      var range = getRangeDates(currentRange);
+      renderCampaignTable(range[0], range[1]);
+    });
+  });
+}
+
+var campColResetBtnEl = document.getElementById('campColResetBtn');
+if(campColResetBtnEl){
+  campColResetBtnEl.addEventListener('click', function(){
+    campColOrder = campColOrderDefault.slice();
+    try{ localStorage.removeItem('campColOrder'); }catch(err){}
+    renderCampTableHead();
+    var range = getRangeDates(currentRange);
+    renderCampaignTable(range[0], range[1]);
+  });
+}
+
 function renderCampaignTable(start, end){
+  renderCampTableHead();
   var rows = rawRows.filter(function(r){ return r.date>=start && r.date<=end; });
   var camps = aggByCampaign(rows).map(function(c){ c.roas = c.spend>0?(c.revenue/c.spend):0; c.ctr = c.impressions>0?(c.clicks/c.impressions*100):0; return c; })
     .sort(function(a,b){
@@ -2196,28 +2288,18 @@ function renderCampaignTable(start, end){
   var tbody = document.getElementById('campaignTable');
   if(!tbody) return;
   if(camps.length===0){
-    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลแคมเปญในช่วงที่เลือก</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="'+campColOrder.length+'" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลแคมเปญในช่วงที่เลือก</td></tr>';
     return;
   }
   tbody.innerHTML = camps.map(function(c){
     var cid = c.campaignId||'';
-    var costPerConv = c.conversations>0 ? (c.spend/c.conversations) : 0;
-    var costPerPurch = c.purchases>0 ? (c.spend/c.purchases) : 0;
-    return '<tr class="camp-tbl-row" data-name="'+c.campaign.replace(/"/g,'&quot;')+'" data-id="'+cid+'">'
-      + '<td>'+(cid?campToggleCellHtml(cid):'')+'</td>'
-      + '<td><span class="ell" title="'+c.campaign.replace(/"/g,'&quot;')+'">'+c.campaign+'</span></td>'
-      + '<td>'+(cid?campStatusCellHtml(cid):'')+'</td>'
-      + '<td class="num">'+fmtMoney(c.spend)+'</td>'
-      + '<td class="num">'+fmtInt(c.impressions)+'</td>'
-      + '<td class="num">'+c.ctr.toFixed(2)+'%</td>'
-      + '<td class="num">'+fmtInt(c.purchases)+'</td>'
-      + '<td class="num">'+fmtInt(c.conversations)+'</td>'
-      + '<td class="num">'+fmtMoney(c.revenue)+'</td>'
-      + '<td class="num">'+c.roas.toFixed(2)+'x</td>'
-      + '<td class="num">'+(costPerConv>0?fmtMoney(costPerConv):'—')+'</td>'
-      + '<td class="num">'+(costPerPurch>0?fmtMoney(costPerPurch):'—')+'</td>'
-      + '<td>'+(cid?campBudgetCellHtml(cid):'')+'</td>'
-      + '</tr>';
+    var cellsHtml = campColOrder.map(function(key){
+      var def = campColumnDefs[key];
+      if(!def) return '';
+      var cls = def.tdClass ? ' class="'+def.tdClass+'"' : '';
+      return '<td'+cls+'>'+def.cell(c)+'</td>';
+    }).join('');
+    return '<tr class="camp-tbl-row" data-name="'+c.campaign.replace(/"/g,'&quot;')+'" data-id="'+cid+'">' + cellsHtml + '</tr>';
   }).join('');
   tbody.querySelectorAll('.camp-tbl-row').forEach(function(tr){
     tr.addEventListener('click', function(e){
