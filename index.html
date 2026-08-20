@@ -375,6 +375,27 @@ footer b{color:var(--pink-dark)}
 .camp-ceo-box{margin-top:12px;background:var(--pink-pale);border-radius:12px;padding:14px}
 .camp-ceo-box pre{white-space:pre-wrap;font-family:inherit;font-size:12.5px;color:var(--text);margin-bottom:10px}
 .camp-ceo-copy{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--pink-dark);font-weight:700;font-size:12px;cursor:pointer}
+
+.camptoggle-btn{width:38px;height:21px;border-radius:11px;border:none;padding:0;position:relative;cursor:pointer}
+.camptoggle-btn span{position:absolute;top:2px;width:17px;height:17px;border-radius:50%;background:#fff;transition:left .15s}
+.campstatus-pill{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px}
+.campstatus-on{background:rgba(31,184,114,.12);color:var(--green)}
+.campstatus-off{background:#f2eef0;color:var(--text-soft)}
+.campbudget-cell{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.campstep-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--pink-pale);color:var(--pink-dark);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.campbudget-input{width:70px;text-align:right;font-size:13px;padding:5px 6px;border:1px solid var(--border);border-radius:8px;color:var(--text)}
+.campbudget-display{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.campbudget-val{font-weight:700;color:var(--text)}
+.campicon-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:#fff;color:var(--pink-dark);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.campicon-btn.confirm{background:var(--green);border-color:var(--green);color:#fff}
+.campicon-btn.cancel{background:#fff;color:var(--text-soft)}
+.campaction-overlay{display:none;position:fixed;inset:0;background:rgba(58,26,42,0.45);align-items:center;justify-content:center;z-index:10000}
+.campaction-modal{background:#fff;border-radius:16px;padding:22px 24px;width:320px;box-shadow:var(--shadow)}
+.campaction-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:15px;color:var(--pink-dark);margin-bottom:8px}
+.campaction-text{font-size:13px;color:var(--text-soft);margin-bottom:18px;line-height:1.6}
+.campaction-actions{display:flex;gap:8px;justify-content:flex-end}
+.campaction-btn{padding:9px 16px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text);font-size:13px;cursor:pointer}
+.campaction-btn.primary{border:none;background:var(--pink);color:#fff}
 </style>
 </head>
 <body>
@@ -510,7 +531,7 @@ footer b{color:var(--pink-dark)}
       <div style="overflow-x:auto">
         <table>
           <thead>
-            <tr><th>แคมเปญ</th><th class="num">Spend</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Purchases</th><th class="num">Revenue</th><th class="num">ROAS</th></tr>
+            <tr><th>เปิด/ปิด</th><th>แคมเปญ</th><th>สถานะ</th><th class="num">Spend</th><th class="num">Impressions</th><th class="num">CTR</th><th class="num">Purchases</th><th class="num">Revenue</th><th class="num">ROAS</th><th>งบ/วัน</th></tr>
           </thead>
           <tbody id="campaignTable"></tbody>
         </table>
@@ -591,6 +612,11 @@ var rawRows = [];        // per adset per day rows from FB
 var dailyAgg = {};       // date -> aggregated metrics
 var currentRange = '7d';
 var chartInst = null;
+var campMeta = {};
+var campMetaLoaded = false;
+var campEditingId = null;
+var campNewBudgetVal = {};
+var campPendingAction = null;
 
 function toYMD(d){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -701,6 +727,7 @@ function finishLoad(rows){
   document.getElementById('dashContent').style.display = 'block';
   document.getElementById('lastUpdated').textContent = 'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH');
   render();
+  if(!campMetaLoaded) fetchCampMeta();
 }
 
 function getRangeDates(range){
@@ -1898,6 +1925,260 @@ var campDrawerCampaign = null;
 var campDrawerRangeDays = 7;
 var campChartInst = null;
 
+
+function fetchCampMeta(){
+  var url = FB_API + ACCOUNT_ID + '/campaigns?fields=id,name,effective_status,daily_budget,lifetime_budget,stop_time&limit=200&access_token=' + ACCOUNT_TOKEN_NAME;
+  fetch(url).then(function(r){return r.json();}).then(function(d){
+    (d.data||[]).forEach(function(c){
+      var db = parseInt(c.daily_budget||0)/100;
+      var lb = parseInt(c.lifetime_budget||0)/100;
+      campMeta[c.id] = {
+        status: c.effective_status || 'ACTIVE',
+        daily_budget: db,
+        lifetime_budget: lb,
+        is_daily: db>0,
+        stop_time: c.stop_time || null,
+        adsetCount: 0,
+        adsets: null,
+        _adsetProbe: false
+      };
+    });
+    campMetaLoaded = true;
+    render();
+  }).catch(function(e){ console.warn('fetchCampMeta error', e); });
+}
+
+function probeCampAdsets(campId){
+  var m = campMeta[campId];
+  if(!m || m._adsetProbe) return;
+  m._adsetProbe = true;
+  fetch(FB_API+campId+'/adsets?fields=daily_budget,lifetime_budget,budget_remaining,id,name&limit=20&access_token='+ACCOUNT_TOKEN_NAME)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.data && d.data.length){
+        m.adsets = d.data;
+        m.adsetCount = d.data.length;
+        var totalDb=0, totalLb=0;
+        d.data.forEach(function(a){ totalDb += parseInt(a.daily_budget||0)/100; totalLb += parseInt(a.lifetime_budget||0)/100; });
+        if(totalDb>0){ m.daily_budget = totalDb; m.is_daily = true; }
+        else if(totalLb>0){ m.lifetime_budget = totalLb; m.is_daily = false; }
+        if(campEditingId === campId){
+          campNewBudgetVal[campId] = m.is_daily ? m.daily_budget : m.lifetime_budget;
+          render();
+        }
+      }
+    }).catch(function(e){ console.warn('probeCampAdsets error', e); });
+}
+
+function campToggleCellHtml(campId){
+  var m = campMeta[campId];
+  if(!m) return '<span style="color:var(--text-soft);font-size:11px">…</span>';
+  var isActive = m.status === 'ACTIVE';
+  return '<button class="camptoggle-btn" data-id="'+campId+'" aria-label="เปิดหรือปิดแคมเปญ" style="background:'+(isActive?'#e6127a':'#e6d3dd')+'"><span style="left:'+(isActive?'19px':'2px')+'"></span></button>';
+}
+function campStatusCellHtml(campId){
+  var m = campMeta[campId];
+  if(!m) return '<span style="color:var(--text-soft);font-size:11px">…</span>';
+  var isActive = m.status === 'ACTIVE';
+  var cls = isActive ? 'campstatus-on' : 'campstatus-off';
+  var label = isActive ? 'ใช้งานอยู่' : (m.status==='PAUSED'?'ปิดใช้งาน':m.status);
+  return '<span class="campstatus-pill '+cls+'">'+label+'</span>';
+}
+function campBudgetCellHtml(campId){
+  var m = campMeta[campId];
+  if(!m) return '<span style="color:var(--text-soft);font-size:11px">…</span>';
+  var curBudget = m.is_daily ? m.daily_budget : m.lifetime_budget;
+  if(campEditingId !== campId){
+    return '<div class="campbudget-display">'
+      + '<span class="campbudget-val">฿'+(curBudget>0?curBudget.toLocaleString():'—')+'</span>'
+      + '<button class="campicon-btn campbudget-editbtn" data-id="'+campId+'" aria-label="แก้ไขงบ">&#9998;</button>'
+      + '</div>';
+  }
+  var nv = campNewBudgetVal[campId] !== undefined ? campNewBudgetVal[campId] : curBudget;
+  return '<div class="campbudget-cell">'
+    + '<button class="campstep-btn campbudget-stepbtn" data-id="'+campId+'" data-dir="-1" aria-label="ลดงบ">&minus;</button>'
+    + '<input class="campbudget-input" data-id="'+campId+'" type="number" value="'+nv+'">'
+    + '<button class="campstep-btn campbudget-stepbtn" data-id="'+campId+'" data-dir="1" aria-label="เพิ่มงบ">+</button>'
+    + '<button class="campicon-btn confirm campbudget-applybtn" data-id="'+campId+'" aria-label="บันทึกงบ">&#10003;</button>'
+    + '<button class="campicon-btn cancel campbudget-cancelbtn" data-id="'+campId+'" aria-label="ยกเลิก">&#10005;</button>'
+    + '</div>';
+}
+
+function bindCampActionListeners(tbody){
+  tbody.querySelectorAll('.camptoggle-btn').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      var campId = this.dataset.id;
+      var m = campMeta[campId];
+      if(!m) return;
+      var row = this.closest('tr');
+      var campName = row ? row.dataset.name : '';
+      var isActive = m.status === 'ACTIVE';
+      campPendingAction = {type:'toggle', campId:campId, campName:campName, isActive:isActive};
+      showCampConfirm((isActive?'ต้องการปิดแคมเปญ "':'ต้องการเปิดแคมเปญ "') + campName + '" ใช่ไหม การเปลี่ยนแปลงนี้จะมีผลกับงบโฆษณาจริงบน Facebook ทันที');
+    });
+  });
+  tbody.querySelectorAll('.campbudget-editbtn').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      var campId = this.dataset.id;
+      var m = campMeta[campId];
+      if(!m) return;
+      campEditingId = campId;
+      campNewBudgetVal[campId] = m.is_daily ? m.daily_budget : m.lifetime_budget;
+      render();
+      if(!m.is_daily && !m.lifetime_budget && !m._adsetProbe){ probeCampAdsets(campId); }
+    });
+  });
+  tbody.querySelectorAll('.campbudget-cancelbtn').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      campEditingId = null;
+      render();
+    });
+  });
+  tbody.querySelectorAll('.campbudget-stepbtn').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      var campId = this.dataset.id;
+      var dir = parseInt(this.dataset.dir);
+      var cur = campNewBudgetVal[campId] || 0;
+      campNewBudgetVal[campId] = Math.max(1, cur + dir*100);
+      render();
+    });
+  });
+  tbody.querySelectorAll('.campbudget-input').forEach(function(inp){
+    inp.addEventListener('click', function(e){ e.stopPropagation(); });
+    inp.addEventListener('change', function(){
+      var campId = this.dataset.id;
+      campNewBudgetVal[campId] = Math.max(1, parseInt(this.value)||0);
+      render();
+    });
+  });
+  tbody.querySelectorAll('.campbudget-applybtn').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      var campId = this.dataset.id;
+      var m = campMeta[campId];
+      if(!m) return;
+      var row = this.closest('tr');
+      var campName = row ? row.dataset.name : '';
+      var oldBudget = m.is_daily ? m.daily_budget : m.lifetime_budget;
+      var newBudget = campNewBudgetVal[campId];
+      if(!newBudget || newBudget<1){ alert('กรุณาระบุงบให้ถูกต้อง'); return; }
+      campPendingAction = {type:'budget', campId:campId, campName:campName, oldBudget:oldBudget, newBudget:newBudget};
+      showCampConfirm('ต้องการเปลี่ยนงบต่อ'+(m.is_daily?'วัน':'ตลอดชีพ')+'ของ "' + campName + '" จาก ฿' + oldBudget.toLocaleString() + ' เป็น ฿' + newBudget.toLocaleString() + ' ใช่ไหม การเปลี่ยนแปลงนี้จะมีผลกับงบโฆษณาจริงบน Facebook ทันที');
+    });
+  });
+}
+
+function ensureCampActionModal(){
+  if(document.getElementById('campActionOverlay')) return;
+  var ov = document.createElement('div');
+  ov.id = 'campActionOverlay';
+  ov.className = 'campaction-overlay';
+  ov.innerHTML = ''
+    + '<div class="campaction-modal">'
+    +   '<div class="campaction-title">ยืนยันการเปลี่ยนแปลง</div>'
+    +   '<div class="campaction-text" id="campActionText"></div>'
+    +   '<div class="campaction-actions">'
+    +     '<button class="campaction-btn" id="campActionCancel">ยกเลิก</button>'
+    +     '<button class="campaction-btn primary" id="campActionConfirm">ยืนยัน</button>'
+    +   '</div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  document.getElementById('campActionCancel').addEventListener('click', hideCampConfirm);
+  ov.addEventListener('click', function(e){ if(e.target === ov) hideCampConfirm(); });
+  document.getElementById('campActionConfirm').addEventListener('click', function(){
+    hideCampConfirm();
+    executeCampPendingAction();
+  });
+}
+function showCampConfirm(text){
+  ensureCampActionModal();
+  document.getElementById('campActionText').textContent = text;
+  document.getElementById('campActionOverlay').style.display = 'flex';
+}
+function hideCampConfirm(){
+  var ov = document.getElementById('campActionOverlay');
+  if(ov) ov.style.display = 'none';
+}
+
+function executeCampPendingAction(){
+  var act = campPendingAction;
+  campPendingAction = null;
+  if(!act) return;
+  if(act.type === 'toggle') doCampToggle(act);
+  else if(act.type === 'budget') doCampBudgetUpdate(act);
+}
+
+function doCampToggle(act){
+  var newStatus = act.isActive ? 'PAUSED' : 'ACTIVE';
+  showBanner('⏳ กำลัง'+(act.isActive?'ปิดโฆษณา':'เปิดโฆษณา')+'...');
+  fetch(FB_API+act.campId+'?access_token='+ACCOUNT_TOKEN_NAME, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({status:newStatus})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.success || d.id){
+      showBanner((newStatus==='ACTIVE'?'✅ เปิด':'⏸ ปิด')+' โฆษณา: '+act.campName);
+      if(campMeta[act.campId]) campMeta[act.campId].status = newStatus;
+      render();
+    } else {
+      showBanner('❌ '+(d.error?d.error.message:'ไม่สำเร็จ'));
+    }
+  }).catch(function(e){ showBanner('❌ '+e.message); });
+}
+
+function doCampBudgetUpdate(act){
+  var m = campMeta[act.campId];
+  if(!m) return;
+  showBanner('⏳ กำลังอัปเดตงบ...');
+  var isDaily = m.is_daily;
+  var targets = [];
+  if(m.adsetCount > 1 && m.adsets){
+    var oldTotal = act.oldBudget || 1;
+    m.adsets.forEach(function(a){
+      var aOld = isDaily ? parseInt(a.daily_budget||0)/100 : parseInt(a.lifetime_budget||0)/100;
+      var ratio = aOld / oldTotal;
+      var aNew = Math.max(1, Math.round(act.newBudget * ratio));
+      targets.push({id:a.id, budget:aNew});
+    });
+  } else if(m.adsetCount === 1 && m.adsets){
+    targets.push({id:m.adsets[0].id, budget:act.newBudget});
+  } else {
+    targets.push({id:act.campId, budget:act.newBudget});
+  }
+  var lastErr = '', allOk = true, remaining = targets.length;
+  targets.forEach(function(t){
+    var body = isDaily ? {daily_budget:t.budget*100} : {lifetime_budget:t.budget*100};
+    fetch(FB_API+t.id+'?access_token='+ACCOUNT_TOKEN_NAME, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    }).then(function(r){return r.json();}).then(function(d){
+      if(!d.success && !d.id){ allOk=false; if(d.error) lastErr=d.error.message; }
+      remaining--;
+      if(remaining===0) finishBudgetUpdate(act, allOk, lastErr, isDaily);
+    }).catch(function(e){
+      allOk=false; lastErr=e.message; remaining--;
+      if(remaining===0) finishBudgetUpdate(act, allOk, lastErr, isDaily);
+    });
+  });
+}
+
+function finishBudgetUpdate(act, allOk, lastErr, isDaily){
+  if(allOk){
+    showBanner('✅ ปรับงบเป็น ฿'+act.newBudget.toLocaleString()+'/'+(isDaily?'วัน':'ตลอดชีพ')+' สำเร็จ');
+    var m = campMeta[act.campId];
+    if(m){
+      if(isDaily) m.daily_budget = act.newBudget; else m.lifetime_budget = act.newBudget;
+    }
+  } else {
+    showBanner('❌ '+(lastErr||'ไม่สำเร็จ'));
+  }
+  campEditingId = null;
+  render();
+}
+
 function renderCampaignTable(start, end){
   var rows = rawRows.filter(function(r){ return r.date>=start && r.date<=end; });
   var camps = aggByCampaign(rows).map(function(c){ c.roas = c.spend>0?(c.revenue/c.spend):0; c.ctr = c.impressions>0?(c.clicks/c.impressions*100):0; return c; })
@@ -1915,23 +2196,31 @@ function renderCampaignTable(start, end){
   var tbody = document.getElementById('campaignTable');
   if(!tbody) return;
   if(camps.length===0){
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลแคมเปญในช่วงที่เลือก</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลแคมเปญในช่วงที่เลือก</td></tr>';
     return;
   }
   tbody.innerHTML = camps.map(function(c){
-    return '<tr class="camp-tbl-row" data-name="'+c.campaign.replace(/"/g,'&quot;')+'" data-id="'+(c.campaignId||'')+'">'
+    var cid = c.campaignId||'';
+    return '<tr class="camp-tbl-row" data-name="'+c.campaign.replace(/"/g,'&quot;')+'" data-id="'+cid+'">'
+      + '<td>'+(cid?campToggleCellHtml(cid):'')+'</td>'
       + '<td><span class="ell" title="'+c.campaign.replace(/"/g,'&quot;')+'">'+c.campaign+'</span></td>'
+      + '<td>'+(cid?campStatusCellHtml(cid):'')+'</td>'
       + '<td class="num">'+fmtMoney(c.spend)+'</td>'
       + '<td class="num">'+fmtInt(c.impressions)+'</td>'
       + '<td class="num">'+c.ctr.toFixed(2)+'%</td>'
       + '<td class="num">'+fmtInt(c.purchases)+'</td>'
       + '<td class="num">'+fmtMoney(c.revenue)+'</td>'
       + '<td class="num">'+c.roas.toFixed(2)+'x</td>'
+      + '<td>'+(cid?campBudgetCellHtml(cid):'')+'</td>'
       + '</tr>';
   }).join('');
   tbody.querySelectorAll('.camp-tbl-row').forEach(function(tr){
-    tr.addEventListener('click', function(){ openCampDrawer(this.dataset.name, this.dataset.id); });
+    tr.addEventListener('click', function(e){
+      if(e.target.closest('.camptoggle-btn, .campbudget-display, .campbudget-cell, .campicon-btn, .campstep-btn, .campbudget-input')) return;
+      openCampDrawer(this.dataset.name, this.dataset.id);
+    });
   });
+  bindCampActionListeners(tbody);
 }
 
 function ensureCampDrawer(){
