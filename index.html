@@ -402,6 +402,16 @@ footer b{color:var(--pink-dark)}
 .col-drag-handle{margin-left:6px;opacity:.45;font-size:11px}
 .camp-th-drag.col-dragging{opacity:.4}
 .camp-th-drag.col-dragover{background:var(--pink-pale);box-shadow:inset 0 0 0 2px var(--pink)}
+.camp-edited-badge{display:inline-block;margin-left:6px;font-size:10px;padding:1px 6px;border-radius:10px;background:var(--pink-pale);color:var(--pink-dark);border:1px solid var(--border);cursor:pointer;white-space:nowrap;}
+.camp-edited-badge:hover{background:var(--pink-light);color:#fff;}
+.camp-log-popover{position:absolute;z-index:9999;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:10px 12px;font-size:12px;min-width:220px;max-width:280px;display:none;}
+.camp-log-popover .row{display:flex;justify-content:space-between;gap:10px;padding:2px 0;color:var(--text-soft);}
+.camp-log-popover .row b{color:var(--text);text-align:right;}
+#campActivityPanel{display:none;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px 12px;max-height:280px;overflow-y:auto;}
+.camp-log-item{font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border);}
+.camp-log-item:last-child{border-bottom:none;}
+.camp-log-meta{font-size:11px;color:var(--text-soft);margin-top:2px;}
+.camp-log-empty{font-size:12px;color:var(--text-soft);padding:6px 0;}
 </style>
 </head>
 <body>
@@ -533,7 +543,7 @@ footer b{color:var(--pink-dark)}
   </div>
 
   <div class="panel">
-      <h2>📋 รายการแคมเปญ <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(คลิกแถวเพื่อดูรายละเอียด ลากหัวคอลัมน์เพื่อย้ายลำดับ)</span> <button id="campColResetBtn" type="button" style="margin-left:8px;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--pink-dark);cursor:pointer">↺ รีเซ็ตคอลัมน์</button></h2>
+      <h2>📋 รายการแคมเปญ <span style="font-size:11px;font-weight:400;color:var(--text-soft)">(คลิกแถวเพื่อดูรายละเอียด ลากหัวคอลัมน์เพื่อย้ายลำดับ)</span> <button id="campActivityBtn" type="button" style="margin-left:8px;font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--pink-dark);cursor:pointer;" onclick="campToggleActivityPanel()">📋 ประวัติการแก้ไข</button> <button id="campColResetBtn" type="button" style="margin-left:8px;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:#fff;color:var(--pink-dark);cursor:pointer">↺ รีเซ็ตคอลัมน์</button></h2>
       <div style="overflow-x:auto">
         <table>
           <thead>
@@ -2129,6 +2139,7 @@ function doCampToggle(act){
     if(d.success || d.id){
       showBanner((newStatus==='ACTIVE'?'✅ เปิด':'⏸ ปิด')+' โฆษณา: '+act.campName);
       if(campMeta[act.campId]) campMeta[act.campId].status = newStatus;
+      campLogPost(act.campId, act.campName, 'status', (act.isActive?'ACTIVE':'PAUSED'), newStatus);
       render();
     } else {
       showBanner('❌ '+(d.error?d.error.message:'ไม่สำเร็จ'));
@@ -2178,6 +2189,7 @@ function finishBudgetUpdate(act, allOk, lastErr, isDaily){
     if(m){
       if(isDaily) m.daily_budget = act.newBudget; else m.lifetime_budget = act.newBudget;
     }
+    campLogPost(act.campId, act.campName, 'budget', act.oldBudget, act.newBudget);
   } else {
     showBanner('❌ '+(lastErr||'ไม่สำเร็จ'));
   }
@@ -2185,9 +2197,131 @@ function finishBudgetUpdate(act, allOk, lastErr, isDaily){
   render();
 }
 
+var CAMP_LOG_API = 'https://richbiotech-fb-proxy.ads02.workers.dev/_camplog';
+var campLogCache = [];
+function campActorName(){
+  try {
+    var n = localStorage.getItem('camp_actor_name');
+    if(!n){
+      n = prompt('กรุณาระบุชื่อของคุณ (จะแสดงในประวัติการแก้ไข):','') || 'Unknown';
+      localStorage.setItem('camp_actor_name', n);
+    }
+    return n;
+  } catch(e){ return 'Unknown'; }
+}
+function campLogPost(campaignId, campaignName, action, oldValue, newValue){
+  try {
+    fetch(CAMP_LOG_API, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ actor: campActorName(), campaignId: campaignId, campaignName: campaignName, action: action, oldValue: oldValue, newValue: newValue })
+    }).then(function(){ campLogRefresh(); }).catch(function(){});
+  } catch(e){}
+}
+function campLogRefresh(){
+  fetch(CAMP_LOG_API).then(function(r){ return r.json(); }).then(function(d){
+    campLogCache = (d && d.log) || [];
+    campRenderLogUI();
+    campApplyBadges();
+  }).catch(function(){});
+}
+function campLogLatestFor(campaignId){
+  for(var i=0;i<campLogCache.length;i++){ if(campLogCache[i].campaignId === campaignId) return campLogCache[i]; }
+  return null;
+}
+function campLogTimeAgo(ts){
+  var diff = Math.floor((Date.now()-ts)/1000);
+  if(diff<60) return 'เมื่อสักครู่';
+  if(diff<3600) return Math.floor(diff/60)+' นาทีที่แล้ว';
+  if(diff<86400) return Math.floor(diff/3600)+' ชั่วโมงที่แล้ว';
+  return Math.floor(diff/86400)+' วันที่แล้ว';
+}
+function campEditBadgeHtml(campaignId){
+  return '<span class="camp-edited-badge" data-campid="'+campaignId+'" style="display:none" onclick="campShowBadgeDetail(this, event)">แก้ไขแล้ว</span>';
+}
+function campApplyBadges(){
+  document.querySelectorAll('.camp-edited-badge').forEach(function(b){
+    var cid = b.getAttribute('data-campid');
+    var entry = campLogLatestFor(cid);
+    if(entry){
+      b.style.display = 'inline-block';
+      b.setAttribute('data-detail', JSON.stringify(entry));
+    } else {
+      b.style.display = 'none';
+    }
+  });
+}
+function campShowBadgeDetail(el, evt){
+  if(evt) evt.stopPropagation();
+  var entry = null;
+  try { entry = JSON.parse(el.getAttribute('data-detail')||'null'); } catch(e){}
+  if(!entry) return;
+  var pop = document.getElementById('campLogPopover');
+  if(!pop){
+    pop = document.createElement('div');
+    pop.id = 'campLogPopover';
+    pop.className = 'camp-log-popover';
+    document.body.appendChild(pop);
+    document.addEventListener('click', function(){ pop.style.display = 'none'; });
+  }
+  var actionLabel = entry.action === 'status' ? 'เปลี่ยนสถานะ' : 'แก้งบ';
+  pop.innerHTML = '<div class="row"><span>ผู้แก้ไข</span><b>'+entry.actor+'</b></div>'+
+    '<div class="row"><span>เวลา</span><b>'+entry.date+' '+entry.time+' น.</b> ('+campLogTimeAgo(entry.ts)+')</div>'+
+    '<div class="row"><span>IP</span><b>'+entry.ip+'</b></div>'+
+    '<div class="row"><span>เปลี่ยนจาก</span><b>'+entry.oldValue+' → '+entry.newValue+'</b></div>';
+  var rect = el.getBoundingClientRect();
+  pop.style.left = Math.min(rect.left, window.innerWidth-260) + 'px';
+  pop.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  pop.style.display = 'block';
+}
+function campRenderLogUI(){
+  var feed = document.getElementById('campActivityFeed');
+  if(!feed) return;
+  if(!campLogCache.length){
+    feed.innerHTML = '<div class="camp-log-empty">ยังไม่มีการแก้ไข</div>';
+  } else {
+    feed.innerHTML = campLogCache.slice(0,20).map(function(e){
+      var actionLabel = e.action === 'status' ? 'เปลี่ยนสถานะ' : 'แก้งบ';
+      return '<div class="camp-log-item"><b>'+(e.campaignName||e.campaignId)+'</b> — '+actionLabel+' '+e.oldValue+' → '+e.newValue+
+        '<div class="camp-log-meta">'+e.actor+' · '+campLogTimeAgo(e.ts)+' · '+e.time+' น. · IP '+e.ip+'</div></div>';
+    }).join('');
+  }
+}
+function ensureCampActivityPanel(){
+  var panel = document.getElementById('campActivityPanel');
+  if(panel) return panel;
+  panel = document.createElement('div');
+  panel.id = 'campActivityPanel';
+  panel.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><b style="font-size:12px;color:var(--pink-dark)">ประวัติการแก้ไขล่าสุด</b><span style="cursor:pointer;font-size:12px;color:var(--text-soft)" onclick="document.getElementById(\'campActivityPanel\').style.display=\'none\'">✕</span></div><div id="campActivityFeed"></div>';
+  document.body.appendChild(panel);
+  return panel;
+}
+function campToggleActivityPanel(){
+  var panel = ensureCampActivityPanel();
+  var btn = document.getElementById('campActivityBtn');
+  var show = panel.style.display !== 'block';
+  if(show && btn){
+    var rect = btn.getBoundingClientRect();
+    panel.style.position = 'fixed';
+    panel.style.top = (rect.bottom + 8) + 'px';
+    panel.style.right = '20px';
+    panel.style.width = '320px';
+    panel.style.zIndex = '9998';
+  }
+  panel.style.display = show ? 'block' : 'none';
+  if(show) campLogRefresh();
+}
+window.addEventListener('load', function(){
+  if (typeof render === 'function') {
+    var _origRender = render;
+    render = function(){ _origRender.apply(this, arguments); campApplyBadges(); };
+  }
+  campLogRefresh();
+});
+
 var campColumnDefs = {
   toggle: {label:'เปิด/ปิด', cell:function(c){ return c.campaignId?campToggleCellHtml(c.campaignId):''; }},
-  name: {label:'แคมเปญ', cell:function(c){ return '<span class="ell" title="'+c.campaign.replace(/"/g,'&quot;')+'">'+c.campaign+'</span>'; }},
+  name: {label:'แคมเปญ', cell:function(c){ var _b = c.campaignId?campEditBadgeHtml(c.campaignId):''; return '<span class="ell" title="'+c.campaign.replace(/"/g,'&quot;')+'">'+c.campaign+'</span>'+_b; }},
   status: {label:'สถานะ', cell:function(c){ return c.campaignId?campStatusCellHtml(c.campaignId):''; }},
   spend: {label:'Spend', thClass:'num', tdClass:'num', cell:function(c){ return fmtMoney(c.spend); }},
   impressions: {label:'Impressions', thClass:'num', tdClass:'num', cell:function(c){ return fmtInt(c.impressions); }},
