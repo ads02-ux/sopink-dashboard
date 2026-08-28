@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SO PINK — สรุปแคมเปญตามรูปโฆษณา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#fff0f6; --bg2:#ffe1ec; --bg3:#ffd0e3;
+  --pink:#e6127a; --pink-dark:#c10e68; --pink-light:#ff8fbf; --pink-pale:#fff5f9;
+  --text:#3a1a2a; --text-soft:#8a5c73;
+  --card:#ffffff; --border:#ffd6e6;
+  --green:#1fb872; --red:#e5484d; --gold:#d4a339;
+  --shadow: 0 8px 24px rgba(230,18,122,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter','Prompt',sans-serif;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% -10%, rgba(255,255,255,.9) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 100% 0%, var(--bg3) 0%, transparent 60%),
+    linear-gradient(160deg, var(--bg1), var(--bg2) 60%, var(--bg1));
+  color:var(--text);
+  min-height:100vh;
+  padding:28px 24px 60px;
+}
+.wrap{max-width:1200px;margin:0 auto}
+header.top{display:flex;align-items:center;gap:14px;margin-bottom:22px}
+.brand-badge{
+  width:52px;height:52px;border-radius:16px;
+  background:linear-gradient(135deg,var(--pink),var(--pink-light));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Prompt',sans-serif;font-weight:800;color:#fff;font-size:22px;
+  box-shadow:var(--shadow);flex-shrink:0;
+}
+h1{font-family:'Prompt',sans-serif;font-weight:800;font-size:24px;color:var(--pink-dark);letter-spacing:.3px}
+header p{font-size:13px;color:var(--text-soft);margin-top:2px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle, var(--pink-light) 0%, transparent 70%); opacity:.25}
+.kpi-label{font-size:12px;color:var(--text-soft);font-weight:600;margin-bottom:6px}
+.kpi-value{font-family:'Prompt',sans-serif;font-size:23px;font-weight:700;color:var(--text)}
+.kpi.hero{background:linear-gradient(135deg,var(--pink),var(--pink-dark));color:#fff}
+.kpi.hero .kpi-label{color:rgba(255,255,255,.85)}
+.kpi.hero .kpi-value{color:#fff}
+.kpi-value.red{color:var(--red)}
+.kpi-value.green{color:var(--green)}
+.kpi-value.pink{color:var(--pink-dark)}
+.section-title{font-family:'Prompt',sans-serif;font-size:16px;font-weight:700;color:var(--pink-dark);margin:6px 0 14px;display:flex;align-items:center;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.card-img{width:100%;aspect-ratio:1/1;overflow:hidden;background:var(--pink-pale)}
+.card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.card-body{padding:14px 16px 16px}
+.card-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:2px}
+.card-sub{font-size:11.5px;color:var(--text-soft);margin-bottom:10px}
+.metric-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-soft);padding:4px 0;border-bottom:1px dashed var(--border)}
+.metric-row:last-of-type{border-bottom:none}
+.metric-row b{color:var(--text);font-weight:600}
+.roas-chip{display:inline-block;margin-top:10px;padding:5px 14px;border-radius:999px;font-family:'Prompt',sans-serif;font-weight:700;font-size:13px}
+.roas-chip.good{background:rgba(31,184,114,.12);color:var(--green)}
+.roas-chip.mid{background:rgba(212,163,57,.15);color:var(--gold)}
+.roas-chip.bad{background:rgba(229,72,77,.12);color:var(--red)}
+footer{text-align:center;margin-top:34px;color:var(--text-soft);font-size:12px}
+footer b{color:var(--pink-dark)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand-badge">SP</div>
+    <div>
+      <h1>SO PINK — สรุปแคมเปญตามรูปโฆษณา</h1>
+      <p>ช่วง 10 – 28 สิงหาคม 2569 (19 วัน) · 67 แคมเปญ · ข้อมูลจาก Facebook Marketing API</p>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <div class="kpi hero">
+      <div class="kpi-label">💰 ยอดใช้จ่ายรวม (Spend)</div>
+      <div class="kpi-value">฿57,578</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">🛍️ ยอดขายรวม (Revenue)</div>
+      <div class="kpi-value pink">฿45,357</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">📊 กำไร/ขาดทุน (P&amp;L)</div>
+      <div class="kpi-value red">฿-12,221</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">🎯 ROAS รวม</div>
+      <div class="kpi-value pink">0.79x</div>
+    </div>
+  </div>
+
+  <div class="section-title">📷 สรุปตามรูปโฆษณาที่ยิง</div>
+  <div class="grid">
+    
+    <div class="card">
+      <div class="card-img"><img src="creatives2026/lek.jpg" alt="4 แถม 2 แถมกระเป๋า — รูปเล็ก" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title">4 แถม 2 แถมกระเป๋า — รูปเล็ก</div>
+        <div class="card-sub">9 แคมเปญ</div>
+        <div class="metric-row"><span>Spend</span><b>฿8,051</b></div>
+        <div class="metric-row"><span>ทัก (Conversations)</span><b>144</b></div>
+        <div class="metric-row"><span>ซื้อ (Purchases)</span><b>19</b></div>
+        <div class="metric-row"><span>ยอดขาย (Revenue)</span><b>฿7,736</b></div>
+        <div class="roas-chip bad">ROAS 0.96x</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img"><img src="creatives2026/yai.jpg" alt="4 แถม 2 แถมกระเป๋า — รูปใหญ่" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title">4 แถม 2 แถมกระเป๋า — รูปใหญ่</div>
+        <div class="card-sub">9 แคมเปญ</div>
+        <div class="metric-row"><span>Spend</span><b>฿11,123</b></div>
+        <div class="metric-row"><span>ทัก (Conversations)</span><b>199</b></div>
+        <div class="metric-row"><span>ซื้อ (Purchases)</span><b>31</b></div>
+        <div class="metric-row"><span>ยอดขาย (Revenue)</span><b>฿16,330</b></div>
+        <div class="roas-chip good">ROAS 1.47x</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img"><img src="creatives2026/rup1.jpg" alt="สิงหาพาแม่สวย — รูป 1" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title">สิงหาพาแม่สวย — รูป 1</div>
+        <div class="card-sub">9 แคมเปญ</div>
+        <div class="metric-row"><span>Spend</span><b>฿7,961</b></div>
+        <div class="metric-row"><span>ทัก (Conversations)</span><b>33</b></div>
+        <div class="metric-row"><span>ซื้อ (Purchases)</span><b>8</b></div>
+        <div class="metric-row"><span>ยอดขาย (Revenue)</span><b>฿4,273</b></div>
+        <div class="roas-chip bad">ROAS 0.54x</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img"><img src="creatives2026/rup2.jpg" alt="สิงหาพาแม่สวย — รูป 2" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title">สิงหาพาแม่สวย — รูป 2</div>
+        <div class="card-sub">9 แคมเปญ</div>
+        <div class="metric-row"><span>Spend</span><b>฿10,147</b></div>
+        <div class="metric-row"><span>ทัก (Conversations)</span><b>39</b></div>
+        <div class="metric-row"><span>ซื้อ (Purchases)</span><b>20</b></div>
+        <div class="metric-row"><span>ยอดขาย (Revenue)</span><b>฿7,461</b></div>
+        <div class="roas-chip bad">ROAS 0.74x</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img"><img src="creatives2026/rup3.jpg" alt="สิงหาพาแม่สวย — รูป 3" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title">สิงหาพาแม่สวย — รูป 3</div>
+        <div class="card-sub">9 แคมเปญ</div>
+        <div class="metric-row"><span>Spend</span><b>฿6,569</b></div>
+        <div class="metric-row"><span>ทัก (Conversations)</span><b>28</b></div>
+        <div class="metric-row"><span>ซื้อ (Purchases)</span><b>10</b></div>
+        <div class="metric-row"><span>ยอดขาย (Revenue)</span><b>฿4,809</b></div>
+        <div class="roas-chip bad">ROAS 0.73x</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img"><img src="creatives2026/item4.jpg" alt="อย่าพึ่งปิดบิล แถม 5 ไอเทม" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title">อย่าพึ่งปิดบิล แถม 5 ไอเทม</div>
+        <div class="card-sub">9 แคมเปญ</div>
+        <div class="metric-row"><span>Spend</span><b>฿4,467</b></div>
+        <div class="metric-row"><span>ทัก (Conversations)</span><b>12</b></div>
+        <div class="metric-row"><span>ซื้อ (Purchases)</span><b>6</b></div>
+        <div class="metric-row"><span>ยอดขาย (Revenue)</span><b>฿2,394</b></div>
+        <div class="roas-chip bad">ROAS 0.54x</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img"><img src="creatives2026/item5.jpg" alt="ปลดล็อคสิทธิ์ช้อป 5 ไอเทม" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title">ปลดล็อคสิทธิ์ช้อป 5 ไอเทม</div>
+        <div class="card-sub">9 แคมเปญ</div>
+        <div class="metric-row"><span>Spend</span><b>฿4,865</b></div>
+        <div class="metric-row"><span>ทัก (Conversations)</span><b>13</b></div>
+        <div class="metric-row"><span>ซื้อ (Purchases)</span><b>4</b></div>
+        <div class="metric-row"><span>ยอดขาย (Revenue)</span><b>฿1,956</b></div>
+        <div class="roas-chip bad">ROAS 0.40x</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img"><img src="creatives2026/other.jpg" alt="อื่นๆ (Shopee คลิกลิงก์ x3 + เก่า 1)" loading="lazy"></div>
+      <div class="card-body">
+        <div class="card-title">อื่นๆ (Shopee คลิกลิงก์ x3 + เก่า 1)</div>
+        <div class="card-sub">4 แคมเปญ</div>
+        <div class="metric-row"><span>Spend</span><b>฿4,395</b></div>
+        <div class="metric-row"><span>ทัก (Conversations)</span><b>35</b></div>
+        <div class="metric-row"><span>ซื้อ (Purchases)</span><b>2</b></div>
+        <div class="metric-row"><span>ยอดขาย (Revenue)</span><b>฿398</b></div>
+        <div class="roas-chip bad">ROAS 0.09x</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Powered by <b>SO PINK</b> · Ads Analytics Dashboard · สรูปโดย Claude</footer>
+</div>
+</body>
+</html>
