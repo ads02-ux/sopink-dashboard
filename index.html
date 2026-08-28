@@ -66,7 +66,19 @@ header.top{
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* filter bar */
-.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;position:relative}
+.daterange-pop{display:none;position:absolute;top:calc(100% + 10px);right:0;z-index:60;background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px 20px;box-shadow:0 12px 32px rgba(230,18,122,.18);min-width:280px}
+.daterange-pop.open{display:block}
+.drp-title{font-family:'Prompt',sans-serif;font-weight:700;font-size:13.5px;color:var(--pink-dark);margin-bottom:12px}
+.drp-row{display:flex;gap:10px;margin-bottom:14px}
+.drp-field{flex:1}
+.drp-field label{display:block;font-size:11px;color:var(--text-soft);margin-bottom:5px;font-weight:600}
+.drp-field input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--text);font-family:'Inter',sans-serif}
+.drp-actions{display:flex;justify-content:flex-end;gap:8px}
+.drp-btn{padding:8px 16px;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border)}
+.drp-cancel{background:#fff;color:var(--text-soft)}
+.drp-apply{background:linear-gradient(135deg,var(--pink),var(--pink-dark));color:#fff;border-color:transparent}
+@media(max-width:480px){.daterange-pop{right:auto;left:0}}
 
 /* status banner */
 #banner{
@@ -462,6 +474,18 @@ footer b{color:var(--pink-dark)}
     <button class="pill active" data-range="7d">7 วัน</button>
     <button class="pill" data-range="30d">30 วัน</button>
     <button class="pill" data-range="all">ทั้งหมด (90 วัน)</button>
+    <button class="pill" id="customRangeBtn" type="button">📅 <span id="customRangeLabel">กำหนดเอง</span></button>
+    <div class="daterange-pop" id="dateRangePop">
+      <div class="drp-title">เลือกช่วงวันที่เอง</div>
+      <div class="drp-row">
+        <div class="drp-field"><label>เริ่มวันที่</label><input type="date" id="drpStart"></div>
+        <div class="drp-field"><label>ถึงวันที่</label><input type="date" id="drpEnd"></div>
+      </div>
+      <div class="drp-actions">
+        <button class="drp-btn drp-cancel" id="drpCancel" type="button">ยกเลิก</button>
+        <button class="drp-btn drp-apply" id="drpApply" type="button">อัปเดต</button>
+      </div>
+    </div>
   </div>
 
   <div id="banner"></div>
@@ -627,6 +651,7 @@ var ACCOUNT_TOKEN_NAME = 'IswardSaynsberryBiz2'; // resolved via Worker ALIASES 
 var rawRows = [];        // per adset per day rows from FB
 var dailyAgg = {};       // date -> aggregated metrics
 var currentRange = '7d';
+var customStart = null, customEnd = null;
 var chartInst = null;
 var campMeta = {};
 var campMetaLoaded = false;
@@ -753,6 +778,7 @@ function getRangeDates(range){
   if(range === '3d') return [addDaysStr(today,-2), today];
   if(range === '7d') return [addDaysStr(today,-6), today];
   if(range === '30d') return [addDaysStr(today,-29), today];
+  if(range === 'custom' && customStart && customEnd) return [customStart, customEnd];
   return [addDaysStr(today,-89), today]; // all
 }
 
@@ -830,12 +856,61 @@ function render(){
 
 document.getElementById('filterBar').addEventListener('click', function(e){
   var btn = e.target.closest('.pill');
-  if(!btn) return;
+  if(!btn || !btn.dataset.range) return;
   document.querySelectorAll('#filterBar .pill').forEach(function(p){ p.classList.remove('active'); });
   btn.classList.add('active');
   currentRange = btn.dataset.range;
   render();
 });
+
+(function(){
+  var customRangeBtn = document.getElementById('customRangeBtn');
+  var dateRangePop = document.getElementById('dateRangePop');
+  var drpStart = document.getElementById('drpStart');
+  var drpEnd = document.getElementById('drpEnd');
+  var customRangeLabel = document.getElementById('customRangeLabel');
+  if(!customRangeBtn) return;
+
+  function formatThaiShort(ymd){
+    var d = new Date(ymd+'T00:00:00');
+    var months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    return d.getDate()+' '+months[d.getMonth()];
+  }
+
+  customRangeBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(!drpStart.value || !drpEnd.value){
+      var seedRange = currentRange === 'custom' ? '7d' : currentRange;
+      var r = getRangeDates(seedRange);
+      drpStart.value = customStart || r[0];
+      drpEnd.value = customEnd || r[1];
+    }
+    dateRangePop.classList.toggle('open');
+  });
+
+  document.getElementById('drpCancel').addEventListener('click', function(){
+    dateRangePop.classList.remove('open');
+  });
+
+  document.getElementById('drpApply').addEventListener('click', function(){
+    if(!drpStart.value || !drpEnd.value) return;
+    var s = drpStart.value, e2 = drpEnd.value;
+    if(s > e2){ var tmp=s; s=e2; e2=tmp; }
+    customStart = s; customEnd = e2;
+    currentRange = 'custom';
+    document.querySelectorAll('#filterBar .pill').forEach(function(p){ p.classList.remove('active'); });
+    customRangeBtn.classList.add('active');
+    customRangeLabel.textContent = formatThaiShort(s) + ' - ' + formatThaiShort(e2);
+    dateRangePop.classList.remove('open');
+    render();
+  });
+
+  document.addEventListener('click', function(e){
+    if(dateRangePop.classList.contains('open') && !dateRangePop.contains(e.target) && !customRangeBtn.contains(e.target)){
+      dateRangePop.classList.remove('open');
+    }
+  });
+})();
 
 document.getElementById('refreshBtn').addEventListener('click', function(){
   this.classList.add('spin');
