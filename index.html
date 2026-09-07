@@ -2591,7 +2591,7 @@ function renderCampDrawerBody(){
   var ceoHtml = '<button class="camp-ceo-btn" id="campCeoBtn">📊 สรุปให้ CEO</button>'
     + '<div id="campCeoResult"></div>';
 
-  body.innerHTML = pillsHtml + kpiHtml + chartHtml + aiHtml + creativesHtml + ceoHtml;
+  body.innerHTML = pillsHtml + campDrawerActionBoxHtml(campDrawerCampaign.id) + kpiHtml + chartHtml + aiHtml + creativesHtml + ceoHtml;
 
   document.querySelectorAll('.camp-range').forEach(function(b){
     b.addEventListener('click', function(){ campDrawerRangeDays = parseInt(this.dataset.days); renderCampDrawerBody(); });
@@ -2601,7 +2601,101 @@ function renderCampDrawerBody(){
 
   drawCampChart(rows);
   renderCampAiCards(t, roas, ctr, rows);
+    bindCampDrawerActions(body, campDrawerCampaign.id);
 }
+
+  function campDrawerActionBoxHtml(campId){
+      var m = campMeta[campId];
+      if(!m) return '';
+      var html = '<div class="campdrawer-actionbox" style="padding:0 16px 14px">';
+      if(campEditingId === campId){
+            html += '<div style="margin-bottom:10px">'+campBudgetCellHtml(campId)+'</div>';
+      } else {
+            html += '<div style="margin-bottom:10px">'
+              + '<button id="campDrawerEditBudgetBtn" data-id="'+campId+'" style="width:100%;padding:10px 14px;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);color:#b45309;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">✏️ แก้ไขงบประมาณ</button>'
+              + '</div>';
+      }
+      var isActive = m.status === 'ACTIVE';
+      html += '<div style="margin-bottom:6px">'
+        + '<button id="campDrawerToggleBtn" data-id="'+campId+'" style="width:100%;padding:10px 14px;background:'+(isActive?'rgba(220,38,38,.1)':'rgba(5,150,105,.1)')+';border:1px solid '+(isActive?'rgba(220,38,38,.35)':'rgba(5,150,105,.35)')+';color:'+(isActive?'#dc2626':'#059669')+';border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">'+(isActive?'⏸ ปิดแคมเปญ':'▶ เปิดแคมเปญ')+'</button>'
+        + '</div>'
+      + '</div>';
+      return html;
+  }
+
+  function bindCampDrawerActions(body, campId){
+      var editBtn = body.querySelector('#campDrawerEditBudgetBtn');
+      if(editBtn){
+            editBtn.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    var m = campMeta[campId];
+                    if(!m) return;
+                    campEditingId = campId;
+                    campNewBudgetVal[campId] = m.is_daily ? m.daily_budget : m.lifetime_budget;
+                    render();
+            });
+      }
+      var toggleBtn = body.querySelector('#campDrawerToggleBtn');
+      if(toggleBtn){
+            toggleBtn.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    var m = campMeta[campId];
+                    if(!m) return;
+                    var isActive = m.status === 'ACTIVE';
+                    var campName = campDrawerCampaign.name;
+                    campPendingAction = {type:'toggle', campId:campId, campName:campName, isActive:isActive};
+                    showCampConfirm((isActive?'ยืนยันปิดแคมเปญ "':'ยืนยันเปิดแคมเปญ "')+campName+'"');
+            });
+      }
+      if(campEditingId === campId){
+            body.querySelectorAll('.campbudget-stepbtn').forEach(function(b){
+                    b.addEventListener('click', function(e){
+                              e.stopPropagation();
+                              var dir = parseInt(this.dataset.dir);
+                              var cur = campNewBudgetVal[campId] || 0;
+                              campNewBudgetVal[campId] = Math.max(1, cur + dir*100);
+                              render();
+                    });
+            });
+            body.querySelectorAll('.campbudget-input').forEach(function(inp){
+                    inp.addEventListener('click', function(e){ e.stopPropagation(); });
+                    inp.addEventListener('input', function(){
+                              campNewBudgetVal[campId] = Math.max(1, parseInt(this.value)||0);
+                    });
+            });
+            body.querySelectorAll('.campbudget-applybtn').forEach(function(b){
+                    b.addEventListener('click', function(e){
+                              e.stopPropagation();
+                              var m = campMeta[campId];
+                              if(!m) return;
+                              var campName = campDrawerCampaign.name;
+                              var oldBudget = m.is_daily ? m.daily_budget : m.lifetime_budget;
+                              var newBudget = campNewBudgetVal[campId];
+                              if(!newBudget || newBudget<1){ alert('กรุณาใส่งบประมาณให้ถูกต้อง'); return; }
+                              campPendingAction = {type:'budget', campId:campId, campName:campName, oldBudget:oldBudget, newBudget:newBudget};
+                              showCampConfirm('ยืนยันแก้ไขงบประมาณ "'+campName+'" จาก '+oldBudget.toLocaleString()+' เป็น '+newBudget.toLocaleString());
+                    });
+            });
+            body.querySelectorAll('.campbudget-cancelbtn').forEach(function(b){
+                    b.addEventListener('click', function(e){
+                              e.stopPropagation();
+                              campEditingId = null;
+                              render();
+                    });
+            });
+      }
+  }
+
+  (function(){
+      var __origRenderForDrawer = render;
+      render = function(){
+            __origRenderForDrawer();
+            var __dw = document.getElementById('campDrawer');
+            if (typeof campDrawerCampaign !== 'undefined' && campDrawerCampaign && campDrawerCampaign.id && __dw && __dw.classList.contains('open')) {
+                    renderCampDrawerBody();
+            }
+      };
+  })();
 
 function campKpiCard(label, val, col){
   return '<div class="camp-kpi"><div class="camp-kpi-label">'+label+'</div><div class="camp-kpi-val" style="color:'+col+'">'+val+'</div></div>';
