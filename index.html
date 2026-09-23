@@ -438,7 +438,7 @@ footer b{color:var(--pink-dark)}
       </div>
     </div>
     <nav class="sb-nav">
-      <div class="sb-item active" data-view="dashboard"><span class="sb-icon">📊</span>Dashboard</div><div class="sb-item" data-view="pages"><span class="sb-icon">📄</span>เพจสินค้า</div>
+      <div class="sb-item active" data-view="pages"><span class="sb-icon">📄</span>เพจสินค้า</div><div class="sb-item" data-view="dashboard"><span class="sb-icon">📊</span>Dashboard</div>
       <div class="sb-item" data-view="ai-content"><span class="sb-icon">🤖</span>AI แนะนำคอนเทนต์</div>
       <div class="sb-item" data-view="ai-ads"><span class="sb-icon">📈</span>AI วิเคราะห์ ADS</div>
       <div class="sb-item" data-view="video"><span class="sb-icon">🎬</span>วิเคราะห์วีดีโอ</div>
@@ -450,7 +450,7 @@ footer b{color:var(--pink-dark)}
   </aside>
   <div class="content-wrap">
 <div class="wrap">
-<div id="view-dashboard">
+<div id="view-dashboard" style="display:none">
 
   <header class="top">
     <div class="brand">
@@ -630,7 +630,7 @@ footer b{color:var(--pink-dark)}
   </div>
 </div>
 
-<div id="view-pages" style="display:none"><div class="fx-panel"><div class="fx-title">📄 เพจสินค้า</div><div class="fx-sub">รายชื่อเพจ So Pink ทั้งหมด</div><div id="pagesBody"><div class="fx-empty">กำลังโหลด...</div></div></div></div><div id="view-alert" style="display:none">
+<div id="view-pages"><div class="fx-panel"><div class="fx-title">📄 เพจสินค้า</div><div class="fx-sub">รายชื่อเพจ So Pink ทั้งหมด</div><div id="pagesBody"><div class="fx-empty">กำลังโหลด...</div></div></div></div><div id="view-alert" style="display:none">
   <div class="fx-panel">
     <div class="fx-title">🔔 Alert การแจ้งเตือน</div>
     <div class="fx-sub">ตรวจจับความผิดปกติของแคมเปญอัตโนมัติ</div>
@@ -647,7 +647,7 @@ footer b{color:var(--pink-dark)}
 var FB_API = 'https://richbiotech-fb-proxy.ads02.workers.dev/v20.0/';
 var ACCOUNT_ID = 'act_559510538970922';   // Sunisa Richbio
 var ACCOUNT_TOKEN_NAME = 'LiupoldFlatdaggerBiz1'; // Sunisa Richbio (direct token, not aliased)
-  var FB_PAGES=[{name:'So Pink บำรุงภายใน ชะลอวัย ของแท้',phone:'02-124-3086',accounts:[]},{name:'So Pink บอกลามดลูกหย่อน น้องสาวหลวม',phone:'02-124-3086',accounts:[]},{name:'So Pink สมุนไพรของวัยทอง',phone:'02-124-3086',accounts:[]},{name:'So Pink หอมฟิตมั่นใจ สวยแซ่บวัย 40+',phone:'',accounts:[]},{name:'So Pink จบปัญหากลิ่น ฟินทั้งคืน',phone:'02-124-3086',accounts:[]},{name:'So Pink กู้วิกฤตวัยทอง',phone:'02-124-3086',accounts:[]},{name:'Sopink ใสปิ๊ง ฟิตเป๊ะ',phone:'02-124-3086',accounts:[]},{name:'So Pink ฟิตกระชับ หอมมั่นใจ',phone:'02-124-3086',accounts:[]},{name:'So Pink เคล็ดลับเสริมความมั่นใจ',phone:'02-124-3086',accounts:[]},{name:'So Pink คืนความชุ่มชื้น มั่นใจทุกวัน',phone:'02-124-3086',accounts:[]},{name:'So Pink สูตรลับกระชับย้อนวัยสาว',phone:'',accounts:[]},{name:'So Pink กระปุกเดียวครบ จบทุกปัญหา',phone:'02-124-3086',accounts:[]}];var rawRows = [];        // per adset per day rows from FB
+  var FB_PAGES=[{name:'So Pink บำรุงภายใน ชะลอวัย ของแท้',phone:'02-124-3086',accounts:[{name:'Raheem Patel',id:'821318035651652',token:'EdwoldWillcottsBiz1'},{name:'Rademar Warpot',id:'1975658186620170',token:'EdwoldWillcottsBiz1'},{name:'Gerulf Von Mann',id:'1259156386146754',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink บอกลามดลูกหย่อน น้องสาวหลวม',phone:'02-124-3086',accounts:[{name:'Fortune Tyrell',id:'791706916843866',token:'EdwoldWillcottsBiz1'},{name:'Dracsome Chatwyn',id:'1705942693512107',token:'EdwoldWillcottsBiz1'},{name:'Hugh Fodd',id:'2703258376699508',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink สมุนไพรของวัยทอง',phone:'02-124-3086',accounts:[]},{name:'So Pink หอมฟิตมั่นใจ สวยแซ่บวัย 40+',phone:'',accounts:[]},{name:'So Pink จบปัญหากลิ่น ฟินทั้งคืน',phone:'02-124-3086',accounts:[]},{name:'So Pink กู้วิกฤตวัยทอง',phone:'02-124-3086',accounts:[]},{name:'Sopink ใสปิ๊ง ฟิตเป๊ะ',phone:'02-124-3086',accounts:[]},{name:'So Pink ฟิตกระชับ หอมมั่นใจ',phone:'02-124-3086',accounts:[]},{name:'So Pink เคล็ดลับเสริมความมั่นใจ',phone:'02-124-3086',accounts:[]},{name:'So Pink คืนความชุ่มชื้น มั่นใจทุกวัน',phone:'02-124-3086',accounts:[]},{name:'So Pink สูตรลับกระชับย้อนวัยสาว',phone:'',accounts:[]},{name:'So Pink กระปุกเดียวครบ จบทุกปัญหา',phone:'02-124-3086',accounts:[]}];var rawRows = [];        // per adset per day rows from FB
 var dailyAgg = {};       // date -> aggregated metrics
 var currentRange = '7d';
 var customStart = null, customEnd = null;
@@ -1985,7 +1985,7 @@ var VIEW_RENDERERS = {
   'alert': renderAlert,'pages':renderPages
 };
 
-function renderPages(){var body=document.getElementById('pagesBody');var html=FB_PAGES.map(function(p){var badge=(p.accounts&&p.accounts.length)?('<span style="color:#1fb872;font-weight:700">'+p.accounts.length+' บัญชี</span>'):('<span style="color:#b0879a">ยังไม่มีบัญชีโฆษณา</span>');return '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;color:var(--text)">'+p.name+'</div><div style="font-size:12px;color:var(--text-soft);margin-top:3px">'+(p.phone||'-')+'</div></div><div style="font-size:13px">'+badge+'</div></div>';}).join('');body.innerHTML=html;}document.querySelectorAll('.sb-item').forEach(function(item){
+function renderPages(){var body=document.getElementById('pagesBody');var html=FB_PAGES.map(function(p){var badge=(p.accounts&&p.accounts.length)?('<span style="color:#1fb872;font-weight:700">'+p.accounts.length+' บัญชี</span>'):('<span style="color:#b0879a">ยังไม่มีบัญชีโฆษณา</span>');return '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;color:var(--text)">'+p.name+'</div><div style="font-size:12px;color:var(--text-soft);margin-top:3px">'+(p.phone||'-')+'</div></div><div style="font-size:13px">'+badge+'</div></div>';}).join('');body.innerHTML=html;}renderPages();loadedViews['pages']=true;document.querySelectorAll('.sb-item').forEach(function(item){
   item.addEventListener('click', function(){
     document.querySelectorAll('.sb-item').forEach(function(i){ i.classList.remove('active'); });
     this.classList.add('active');
