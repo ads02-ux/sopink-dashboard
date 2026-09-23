@@ -438,7 +438,7 @@ footer b{color:var(--pink-dark)}
       </div>
     </div>
     <nav class="sb-nav">
-      <div class="sb-item active" data-view="dashboard"><span class="sb-icon">📊</span>Dashboard</div>
+      <div class="sb-item active" data-view="dashboard"><span class="sb-icon">📊</span>Dashboard</div><div class="sb-item" data-view="pages"><span class="sb-icon">📄</span>เพจสินค้า</div>
       <div class="sb-item" data-view="ai-content"><span class="sb-icon">🤖</span>AI แนะนำคอนเทนต์</div>
       <div class="sb-item" data-view="ai-ads"><span class="sb-icon">📈</span>AI วิเคราะห์ ADS</div>
       <div class="sb-item" data-view="video"><span class="sb-icon">🎬</span>วิเคราะห์วีดีโอ</div>
@@ -630,7 +630,7 @@ footer b{color:var(--pink-dark)}
   </div>
 </div>
 
-<div id="view-alert" style="display:none">
+<div id="view-pages" style="display:none"><div class="fx-panel"><div class="fx-title">📄 เพจสินค้า</div><div class="fx-sub">รายชื่อเพจ So Pink ทั้งหมด</div><div id="pagesBody"><div class="fx-empty">กำลังโหลด...</div></div></div></div><div id="view-alert" style="display:none">
   <div class="fx-panel">
     <div class="fx-title">🔔 Alert การแจ้งเตือน</div>
     <div class="fx-sub">ตรวจจับความผิดปกติของแคมเปญอัตโนมัติ</div>
@@ -918,7 +918,7 @@ document.getElementById('refreshBtn').addEventListener('click', function(){
   setTimeout(function(){ self.classList.remove('spin'); }, 800);
 });
 
-var ALL_VIEWS = ['dashboard','ai-content','ai-ads','video','image','ranking','buyers','alert'];
+var ALL_VIEWS = ['dashboard','ai-content','ai-ads','video','image','ranking','buyers','alert','pages'];
 var loadedViews = {};
 
 function last30Rows(){
@@ -1982,10 +1982,10 @@ var VIEW_RENDERERS = {
   'image': renderImage,
   'ranking': renderRanking,
   'buyers': loadBuyersData,
-  'alert': renderAlert
+  'alert': renderAlert,'pages':renderPages
 };
 
-document.querySelectorAll('.sb-item').forEach(function(item){
+function renderPages(){var body=document.getElementById('pagesBody');var html=FB_PAGES.map(function(p){var badge=(p.accounts&&p.accounts.length)?('<span style="color:#1fb872;font-weight:700">'+p.accounts.length+' บัญชี</span>'):('<span style="color:#b0879a">ยังไม่มีบัญชีโฆษณา</span>');return '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;color:var(--text)">'+p.name+'</div><div style="font-size:12px;color:var(--text-soft);margin-top:3px">'+(p.phone||'-')+'</div></div><div style="font-size:13px">'+badge+'</div></div>';}).join('');body.innerHTML=html;}document.querySelectorAll('.sb-item').forEach(function(item){
   item.addEventListener('click', function(){
     document.querySelectorAll('.sb-item').forEach(function(i){ i.classList.remove('active'); });
     this.classList.add('active');
