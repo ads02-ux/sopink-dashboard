@@ -553,12 +553,12 @@ footer b{color:var(--pink-dark)}
     </div>
 
     <div class="panel">
-      <h2>🗓️ รายละเอียดรายวัน</h2>
+      <h2>🏆 TOP 5 บัญชี (ยอดใช้จ่ายสูงสุด)</h2>
       <div style="overflow-x:auto">
         <table>
           <thead>
             <tr>
-              <th>วันที่</th><th class="num">Spend</th><th class="num">Impressions</th>
+              <th>บัญชี</th><th class="num">Spend</th><th class="num">Impressions</th>
               <th class="num">Purchases</th><th class="num">Revenue</th><th class="num">ROAS</th>
             </tr>
           </thead>
@@ -651,6 +651,7 @@ var ACCOUNT_ID = 'act_559510538970922';   // Sunisa Richbio
 var ACCOUNT_TOKEN_NAME = 'LiupoldFlatdaggerBiz1'; // Sunisa Richbio (direct token, not aliased)
   var FB_PAGES=[{name:'So Pink บำรุงภายใน ชะลอวัย ของแท้',phone:'02-124-3086',accounts:[{name:'Raheem Patel',id:'821318035651652',token:'EdwoldWillcottsBiz1'},{name:'Rademar Warpot',id:'1975658186620170',token:'EdwoldWillcottsBiz1'},{name:'Gerulf Von Mann',id:'1259156386146754',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink บอกลามดลูกหย่อน น้องสาวหลวม',phone:'02-124-3086',accounts:[{name:'Fortune Tyrell',id:'791706916843866',token:'EdwoldWillcottsBiz1'},{name:'Dracsome Chatwyn',id:'1705942693512107',token:'EdwoldWillcottsBiz1'},{name:'Hugh Fodd',id:'2703258376699508',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink สมุนไพรของวัยทอง',phone:'02-124-3086',accounts:[{name:'Redulph Upton',id:'2502746686780631',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink หอมฟิตมั่นใจ สวยแซ่บวัย 40+',phone:'',accounts:[]},{name:'So Pink จบปัญหากลิ่น ฟินทั้งคืน',phone:'02-124-3086',accounts:[{name:'Isward Saynsberry biz 4',id:'1266124731697366',token:'LiupoldFlatdaggerBiz1'},{name:'Gunnar Jans',id:'1204811885141036',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink กู้วิกฤตวัยทอง',phone:'02-124-3086',accounts:[{name:'Isward Saynsberry',id:'440130788986258',token:'EdwoldWillcottsBiz1'},{name:'Lucy Dynham',id:'780064420989495',token:'EdwoldWillcottsBiz1'}]},{name:'Sopink ใสปิ๊ง ฟิตเป๊ะ',phone:'02-124-3086',accounts:[{name:'Ilbert Wrenn',id:'741171078336683',token:'EdwoldWillcottsBiz1'},{name:'Madiltha Sock',id:'608062888518987',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink ฟิตกระชับ หอมมั่นใจ',phone:'02-124-3086',accounts:[{name:'Ljúfvina Ferrer',id:'655008833880728',token:'EdwoldWillcottsBiz1'},{name:'OT Organizer',id:'559510538970922',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink เคล็ดลับเสริมความมั่นใจ',phone:'02-124-3086',accounts:[{name:'Blanche Killigrew',id:'1340020193892694',token:'EdwoldWillcottsBiz1'},{name:'Álmóder Boldhammer',id:'1779460659286089',token:'EdwoldWillcottsBiz1'},{name:'Auda Norden',id:'611752414823618',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink คืนความชุ่มชื้น มั่นใจทุกวัน',phone:'02-124-3086',accounts:[]},{name:'So Pink สูตรลับกระชับย้อนวัยสาว',phone:'',accounts:[{name:'Fly many',id:'2008806843069426',token:'EdwoldWillcottsBiz1'}]},{name:'So Pink กระปุกเดียวครบ จบทุกปัญหา',phone:'02-124-3086',accounts:[{name:'Kanosak Blackwell',id:'1079661624050050',token:'EdwoldWillcottsBiz1'},{name:'Paol Gianthunt',id:'991404475868869',token:'EdwoldWillcottsBiz1'},{name:'Hugubert von Schuchardt',id:'552457187874786',token:'EdwoldWillcottsBiz1'}]}];var rawRows = [];        // per adset per day rows from FB
 var dailyAgg = {};       // date -> aggregated metrics
+var acctAgg = {};        // account name -> aggregated metrics
 var currentRange = '7d';
 var customStart = null, customEnd = null;
 var chartInst = null;
@@ -714,6 +715,17 @@ function calcRow(ins){
   };
 }
 
+function aggregateByAccount(rows){
+  var map = {};
+  rows.forEach(function(r){
+    var key = r.accName || 'ไม่ระบุบัญชี';
+    if(!map[key]) map[key] = {name:key, spend:0, impressions:0, purchases:0, conversations:0, revenue:0};
+    var m = map[key];
+    m.spend += r.spend; m.impressions += r.impressions;
+    m.purchases += r.purchases; m.conversations += r.conversations; m.revenue += r.revenue;
+  });
+  return map;
+}
 function aggregateByDate(rows){
   var map = {};
   rows.forEach(function(r){
@@ -748,6 +760,7 @@ function loadData(){
       +'&level=adset&time_range='+timeRange
       +'&time_increment=1&limit=500&access_token='+acc.token;
     fetchAllPages(url, [], function(rows){
+      rows.forEach(function(r){ r.accName = acc.name; r.accId = acc.id; });
       merged=merged.concat(rows);
       remaining--;
       if(remaining<=0) finishLoad(merged);
@@ -779,6 +792,7 @@ function fetchAllPages(url, accumulated, cb){
 function finishLoad(rows){
   rawRows = rows;
   dailyAgg = aggregateByDate(rows);
+  acctAgg = aggregateByAccount(rows);
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('dashContent').style.display = 'block';
   document.getElementById('lastUpdated').textContent = 'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH');
@@ -833,14 +847,14 @@ function render(){if(pdCtxAccountId){pdRefreshAccountTable();return;}renderPageC
 
   // table
   var tbody = document.getElementById('dailyTable');
-  var sortedDesc = dates.slice().sort().reverse();
-  if(sortedDesc.length === 0){
+  var acctNames = Object.keys(acctAgg).sort(function(a,b){ return acctAgg[b].spend - acctAgg[a].spend; }).slice(0,5);
+  if(acctNames.length === 0){
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลในช่วงที่เลือก</td></tr>';
   } else {
-    tbody.innerHTML = sortedDesc.map(function(d){
-      var m = dailyAgg[d];
+    tbody.innerHTML = acctNames.map(function(name){
+      var m = acctAgg[name];
       var r = m.spend>0 ? (m.revenue/m.spend) : 0;
-      return '<tr><td>'+d+'</td><td class="num">'+fmtMoney(m.spend)+'</td><td class="num">'+fmtInt(m.impressions)+
+      return '<tr><td>'+name+'</td><td class="num">'+fmtMoney(m.spend)+'</td><td class="num">'+fmtInt(m.impressions)+
         '</td><td class="num">'+fmtInt(m.purchases)+'</td><td class="num">'+fmtMoney(m.revenue)+'</td><td class="num">'+r.toFixed(2)+'x</td></tr>';
     }).join('');
   }
