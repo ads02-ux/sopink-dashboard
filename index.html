@@ -304,6 +304,7 @@ footer b{color:var(--pink-dark)}
 .vf-filterbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:18px}
 .vf-filterbar label{font-size:11.5px;color:var(--text-soft);font-weight:600;margin-right:6px}
 .vf-filterbar input[type=number]{width:80px;padding:7px 9px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:inherit}
+.vf-filterbar select{padding:7px 9px;border-radius:8px;border:1px solid var(--border);font-size:13px;font-family:inherit;background:#fff}
 .vf-toggle-wrap{display:flex;align-items:center;gap:8px;margin-left:auto}
 .vf-switch{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0}
 .vf-switch input{opacity:0;width:0;height:0}
@@ -341,6 +342,7 @@ footer b{color:var(--pink-dark)}
 .vf-thumb{width:38px;height:38px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--pink-pale)}
 .vf-thumb-ph{width:38px;height:38px;border-radius:6px;flex-shrink:0;background:var(--pink-pale);display:flex;align-items:center;justify-content:center}
 .vf-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.vf-acc-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#9ca3af;margin-top:2px}
 .vf-score-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-weight:800;font-size:11px}
 
 /* ---- campaign detail drawer ---- */
@@ -1448,19 +1450,30 @@ function vfGetA(arr, type){
   var f = arr.find(function(a){ return a.action_type === type; });
   return f ? parseFloat(f.value) : 0;
 }
-function vfFetchInsights(){
+var vfSelAcc = 'all';
+var vfDaysSel = '30';
+var vfCustomStart = '';
+var vfCustomEnd = '';
+function vfGetDateRange(){
   var now = new Date();
-  var since = new Date(now); since.setDate(since.getDate()-29);
+  if(vfDaysSel==='custom' && vfCustomStart && vfCustomEnd){
+    return {since:vfCustomStart, until:vfCustomEnd};
+  }
+  var since = new Date(now); since.setDate(since.getDate()-(parseInt(vfDaysSel,10)-1));
+  return {since:toYMD(since), until:toYMD(now)};
+}
+function vfFetchInsights(){
+  var range = vfGetDateRange();
   var fields = 'ad_id,ad_name,spend,impressions,actions,video_play_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions';
-  var timeRange = encodeURIComponent(JSON.stringify({since:toYMD(since), until:toYMD(now)}));
+  var timeRange = encodeURIComponent(JSON.stringify({since:range.since, until:range.until}));
   return fbFetchAllAccounts(function(acc){
     return FB_API + 'act_' + acc.id + '/insights?fields=' + fields + '&level=ad&time_range=' + timeRange + '&limit=500&access_token=' + acc.token;
-  });
+  }, vfSelAcc==='all' ? null : [vfSelAcc]);
 }
 function vfFetchCreatives(){
   return fbFetchAllAccounts(function(acc){
     return FB_API + 'act_' + acc.id + '/ads?fields=id,name,created_time,creative{thumbnail_url,video_id}&limit=500&access_token=' + acc.token;
-  });
+  }, vfSelAcc==='all' ? null : [vfSelAcc]);
 }
 function vfMerge(ins, crs){
   var cm = {};
@@ -1482,6 +1495,7 @@ function vfMerge(ins, crs){
       name: (cr.name || row.ad_name || 'ไม่ระบุ').substring(0,60),
       thumb: (cr.creative && cr.creative.thumbnail_url) ? cr.creative.thumbnail_url : '',
       vid: (cr.creative && cr.creative.video_id) ? cr.creative.video_id : '',
+      accName: row._accName || cr._accName || '',
       spend: parseFloat(row.spend)||0,
       imp: parseInt(row.impressions)||0,
       v3s: vfGetA(row.video_play_actions, 'video_view'),
@@ -1645,7 +1659,7 @@ function vfTbl(d){
     var canPlay = !!(d0.vid || d0.thumb);
     var thumbInner = d0.thumb ? '<img class="vf-thumb" src="'+d0.thumb+'" onerror="this.style.display=\'none\'">' : '<div class="vf-thumb-ph">🎬</div>';
     var thumbHtml = canPlay ? '<button type="button" class="vf-thumb-btn" data-idx="'+idx0+'" style="border:0;background:none;padding:0;cursor:pointer;display:flex">'+thumbInner+'</button>' : thumbInner;
-    html += '<tr><td><div class="vf-name-cell">'+thumbHtml+'<span class="vf-name-text" title="'+d0.name+'">'+d0.name+'</span></div></td>'
+    html += '<tr><td><div class="vf-name-cell">'+thumbHtml+'<span class="vf-name-text" title="'+d0.name+'">'+d0.name+'</span>'+(d0.accName?'<span class="vf-acc-text">'+d0.accName+'</span>':'')+'</div></td>'
       + '<td>'+d0.days+'</td>'
       + '<td><span class="vf-score-badge" style="background:'+scColor+'">'+d0.score+'</span></td>'
       + '<td style="color:'+d0.vcolor+';font-weight:700">'+qIcon+d0.verdict+'</td>'
@@ -1668,8 +1682,14 @@ function vfTbl(d){
 }
 function renderVideo(){
   var el = document.getElementById('videoBody');
+  var vfAccList = fbGetAllAccountsList();
+  var vfAccOptsHtml = '<option value="all">ทุกบัญชี</option>' + vfAccList.map(function(a){ return '<option value="'+a.id+'"'+(vfSelAcc===String(a.id)?' selected':'')+'>'+a.name+'</option>'; }).join('');
+  var vfDaysOptsHtml = ['7','30','90'].map(function(d){ return '<option value="'+d+'"'+(vfDaysSel===d?' selected':'')+'>'+d+' วันล่าสุด</option>'; }).join('') + '<option value="custom"'+(vfDaysSel==='custom'?' selected':'')+'>กำหนดเอง</option>';
   el.innerHTML = ''
     + '<div class="vf-filterbar">'
+    +   '<span><label>บัญชี</label><select id="vfAccSel">'+vfAccOptsHtml+'</select></span>'
+    +   '<span><label>ช่วงวัน</label><select id="vfDaysSel">'+vfDaysOptsHtml+'</select></span>'
+    +   '<span id="vfCustomWrap" style="display:'+(vfDaysSel==="custom"?"inline-flex":"none")+';align-items:center;gap:6px"><input type="date" id="vfCustomStart" value="'+vfCustomStart+'"><span style="color:var(--text-soft);font-size:12px">ถึง</span><input type="date" id="vfCustomEnd" value="'+vfCustomEnd+'"><button type="button" id="vfCustomGo" style="padding:6px 12px;border-radius:8px;border:1px solid var(--pink);background:var(--pink);color:#fff;font-size:12px;cursor:pointer">ตกลง</button></span>'
     +   '<span><label>ยอดใช้จ่ายขั้นต่ำ (฿)</label><input type="number" id="vfMinSpend" value="1000"></span>'
     +   '<span><label>อิมเพรสชันขั้นต่ำ</label><input type="number" id="vfMinImpr" value="1000"></span>'
     +   '<div class="vf-toggle-wrap"><label class="vf-switch"><input type="checkbox" id="vfShowLow"><span class="vf-slider"></span></label><span style="font-size:12px;color:var(--text-soft)">แสดงวีดีโอที่ข้อมูลยังน้อย</span></div>'
@@ -1688,16 +1708,43 @@ function renderVideo(){
     + '<div id="vfTblWrap" style="overflow-x:auto"></div>';
 
   document.getElementById('vfMinSpend').addEventListener('change', vfRenderFiltered);
-  document.getElementById('vfMinImpr').addEventListener('change', vfRenderFiltered);
+  document.getElementById('vfMinImp').addEventListener('change', vfRenderFiltered);
   document.getElementById('vfShowLow').addEventListener('change', vfRenderFiltered);
+  document.getElementById('vfAccSel').addEventListener('change', function(){
+    vfSelAcc = this.value;
+    vfLoadData();
+  });
+  document.getElementById('vfDaysSel').addEventListener('change', function(){
+    vfDaysSel = this.value;
+    var wrap = document.getElementById('vfCustomWrap');
+    if(vfDaysSel==='custom'){ if(wrap) wrap.style.display='inline-flex'; return; }
+    if(wrap) wrap.style.display='none';
+    vfLoadData();
+  });
+  var vfGoBtn = document.getElementById('vfCustomGo');
+  if(vfGoBtn){
+    vfGoBtn.addEventListener('click', function(){
+      var s = document.getElementById('vfCustomStart').value;
+      var e = document.getElementById('vfCustomEnd').value;
+      if(!s || !e){ return; }
+      vfCustomStart = s; vfCustomEnd = e;
+      vfLoadData();
+    });
+  }
 
+  vfLoadData();
+}
+
+function vfLoadData(){
+  var cardsEl = document.getElementById('vfCards');
+  if(cardsEl){ cardsEl.innerHTML = '<div class="fx-empty" style="grid-column:1/-1">⏳ กำลังโหลดข้อมูลวิดีโอ...</div>'; }
   Promise.all([vfFetchInsights(), vfFetchCreatives()]).then(function(res){
     var merged = vfMerge(res[0], res[1]);
     vfAllData = merged.filter(function(d){ return d.v3s > 0; });
     vfCalc(vfAllData);
     vfRenderFiltered();
   }).catch(function(err){
-    el.innerHTML += '<div class="fx-empty">โหลดข้อมูลวิดีโอไม่สำเร็จ: '+err.message+'</div>';
+    if(cardsEl){ cardsEl.innerHTML = '<div class="fx-empty">โหลดข้อมูลวิดีโอไม่สำเร็จ: '+err.message+'</div>'; }
   });
 }
 
@@ -1952,19 +1999,30 @@ function fbBreakdownUrl(breakdowns, days){
     + '&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
 }
 
-function fbFetchAllAccounts(urlBuilder){
+function fbFetchAllAccounts(urlBuilder, accFilter){
   var allAccounts=[];
   FB_PAGES.forEach(function(p){ p.accounts.forEach(function(a){ allAccounts.push(a); }); });
+  if(accFilter && accFilter.length){ allAccounts = allAccounts.filter(function(a){ return accFilter.indexOf(String(a.id))>-1; }); }
   if(allAccounts.length===0){ return Promise.resolve([]); }
   return Promise.all(allAccounts.map(function(acc){
     var url = urlBuilder(acc);
-    return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+    return fetch(url).then(function(r){return r.json();}).then(function(d){
+      var rows = d.data || [];
+      rows.forEach(function(r){ r._accName = acc.name; r._accId = acc.id; });
+      return rows;
+    }).catch(function(){ return []; });
   })).then(function(results){
     var merged=[];
     results.forEach(function(rows){ merged = merged.concat(rows); });
     return merged;
   });
 }
+function fbGetAllAccountsList(){
+  var allAccounts=[];
+  FB_PAGES.forEach(function(p){ p.accounts.forEach(function(a){ allAccounts.push(a); }); });
+  return allAccounts;
+}
+
 function fbFetchAllAccountsBreakdown(breakdowns, days){
   var today = todayBangkok();
   var until = today;
