@@ -2775,10 +2775,39 @@ function renderCampDrawerBody(){
       return html;
   }
 
-  function openCampBudgetModal(campId){
+  async function openCampBudgetModal(campId){
   var m = campMeta[campId];
   if(!m) return;
   var campName = (campDrawerCampaign && campDrawerCampaign.name) || '';
+  var tok = ACCOUNT_TOKEN_NAME;
+  if(!(m.daily_budget>0) && !(m.lifetime_budget>0)){
+    try{
+      var br = await fetch(FB_API+campId+'?fields=daily_budget,lifetime_budget&access_token='+tok);
+      var bd = await br.json();
+      var db2 = parseInt(bd.daily_budget||0)/100;
+      var lb2 = parseInt(bd.lifetime_budget||0)/100;
+      if(db2>0){ m.daily_budget=db2; m.is_daily=true; }
+      else if(lb2>0){ m.lifetime_budget=lb2; m.is_daily=false; }
+    }catch(e){}
+  }
+  if(!(m.daily_budget>0) && !(m.lifetime_budget>0)){
+    try{
+      var ar = await fetch(FB_API+campId+'/adsets?fields=daily_budget,lifetime_budget,budget_remaining,id,name&limit=20&access_token='+tok);
+      var ad = await ar.json();
+      if(ad.data && ad.data.length>0){
+        m.adsetCount = ad.data.length;
+        m.adsets = ad.data;
+        var totalDb=0, totalLb=0;
+        ad.data.forEach(function(a){
+          totalDb += parseInt(a.daily_budget||0)/100;
+          totalLb += parseInt(a.lifetime_budget||0)/100;
+        });
+        if(totalDb>0){ m.daily_budget=totalDb; m.is_daily=true; }
+        else if(totalLb>0){ m.lifetime_budget=totalLb; m.is_daily=false; }
+      }
+    }catch(e){}
+  }
+
   var isDaily = !!m.is_daily;
   var curBud = isDaily ? (m.daily_budget||0) : (m.lifetime_budget||0);
   var budType = isDaily ? 'วัน' : 'ตลอดชีพ';
@@ -2787,6 +2816,8 @@ function renderCampDrawerBody(){
   var budgetExhausted = !!(adsetCount>0 && !isDaily && m.adsets && m.adsets.every(function(a){ return parseInt(a.budget_remaining||0)===0; }));
   var adsetNote = adsetCount>1 ? '<div style="font-size:.6rem;color:#0284c7;margin-top:6px">⚠️ '+adsetCount+' ชุดโฆษณา — งบรวมทั้งหมด</div>' :
                   adsetCount===1 ? '<div style="font-size:.6rem;color:#64748b;margin-top:6px">งบระดับชุดโฆษณา (ABO)</div>' : '';
+  var stopDateVal = m.stop_time ? m.stop_time.substring(0,10) : '';
+
   var ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.55);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
   ov.innerHTML = '<div style="background:#fff;border-radius:14px;padding:22px 24px;width:310px;box-shadow:0 24px 64px rgba(15,23,42,.3);font-family:inherit">'
@@ -2802,6 +2833,7 @@ function renderCampDrawerBody(){
       + '<label style="font-size:.68rem;color:#64748b;display:block;margin-bottom:6px;font-weight:600">ปรับงบเป็น (฿ / '+budType+')</label>'
       + '<input id="spBudgetInp" type="number" min="1" value="'+(curBud>0?curBud:'')+'" style="width:100%;box-sizing:border-box;border:2px solid #cbd5e1;border-radius:8px;padding:10px 12px;font-size:1rem;font-weight:700;color:#0f172a;outline:none;font-family:Rajdhani,sans-serif">'
     + '</div>'
+    + '<div style="margin-bottom:12px;"><label style="font-size:.68rem;color:#64748b;display:block;margin-bottom:4px;font-weight:600;">📅 วันสิ้นสุดแคมเปญ</label><input type="date" id="spStopDate" value="'+stopDateVal+'" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:6px;padding:6px 8px;font-size:.85rem;"></div>'
     + '<div style="display:flex;gap:8px">'
       + '<button id="spBudCancel" style="flex:1;padding:9px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;color:#64748b;cursor:pointer;font-family:inherit;font-size:.82rem">ยกเลิก</button>'
       + '<button id="spBudConfirm" style="flex:2;padding:9px;border:none;border-radius:8px;background:#e6127a;color:#fff;cursor:pointer;font-family:inherit;font-size:.85rem;font-weight:700">ยืนยัน ✓</button>'
@@ -2822,13 +2854,61 @@ function renderCampDrawerBody(){
   function close_(){ if(ov.parentNode) ov.parentNode.removeChild(ov); }
   ov.addEventListener('click', function(e){ if(e.target===ov) close_(); });
   document.getElementById('spBudCancel').onclick = close_;
-  document.getElementById('spBudConfirm').onclick = function(){
+  document.getElementById('spBudConfirm').onclick = async function(){
     var inp2 = document.getElementById('spBudgetInp');
     if(!inp2) return;
     var b = parseInt(inp2.value);
     if(isNaN(b) || b<1){ inp2.style.borderColor = '#ef4444'; inp2.focus(); return; }
+    var sdRaw = (document.getElementById('spStopDate')||{}).value || '';
+    var sd = (sdRaw !== stopDateVal) ? sdRaw : '';
     close_();
-    doCampBudgetUpdate({campId:campId, campName:campName, oldBudget:curBud, newBudget:b});
+    showBanner('⏳ กำลังอัปเดตงบ...');
+    var targets = [];
+    if(adsetCount>1 && m.adsets){
+      var oldTotal = curBud || 1;
+      m.adsets.forEach(function(a){
+        var aOld = isDaily ? parseInt(a.daily_budget||0)/100 : parseInt(a.lifetime_budget||0)/100;
+        var ratio = aOld / oldTotal;
+        var aNew = Math.max(1, Math.round(b*ratio));
+        targets.push({id:a.id, budget:aNew});
+      });
+    } else if(adsetCount===1 && m.adsets){
+      targets.push({id:m.adsets[0].id, budget:b});
+    } else {
+      targets.push({id:campId, budget:b});
+    }
+    try{
+      var lastErr='', allOk=true;
+      for(var i=0;i<targets.length;i++){
+        var t0 = targets[i];
+        var body = isDaily ? {daily_budget:t0.budget*100} : {lifetime_budget:t0.budget*100};
+        if(sd){ body.end_time = Math.floor(new Date(sd+'T23:59:59+07:00').getTime()/1000); }
+        var resp = await fetch(FB_API+t0.id+'?access_token='+encodeURIComponent(tok), {
+          method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+        });
+        var d0 = await resp.json();
+        if(!d0.success && !d0.id){ allOk=false; if(d0.error) lastErr=d0.error.message; }
+      }
+      if(sd){
+        var stopTs = Math.floor(new Date(sd+'T23:59:59+07:00').getTime()/1000);
+        fetch(FB_API+campId+'?access_token='+encodeURIComponent(tok), {
+          method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({stop_time:stopTs})
+        }).then(function(r2){return r2.json();}).then(function(d2){
+          if(d2 && d2.error) showBanner('❌ วันที่: '+d2.error.message);
+        }).catch(function(){});
+        m.stop_time = sd+'T23:59:59+0700';
+      }
+      if(allOk){
+        showBanner('✅ ปรับงบเป็น ฿'+b.toLocaleString()+'/'+budType+' สำเร็จ');
+        if(isDaily) m.daily_budget = b; else m.lifetime_budget = b;
+        campLogPost(campId, campName, 'budget', curBud, b);
+      } else {
+        showBanner('❌ '+(lastErr||'ไม่สำเร็จ'));
+      }
+    }catch(e){
+      showBanner('❌ '+e.message);
+    }
+    render();
   };
   if(inp){ inp.addEventListener('keydown', function(e){
     if(e.key==='Enter') document.getElementById('spBudConfirm').click();
