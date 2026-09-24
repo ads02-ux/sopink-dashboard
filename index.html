@@ -1453,12 +1453,14 @@ function vfFetchInsights(){
   var since = new Date(now); since.setDate(since.getDate()-29);
   var fields = 'ad_id,ad_name,spend,impressions,actions,video_play_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions';
   var timeRange = encodeURIComponent(JSON.stringify({since:toYMD(since), until:toYMD(now)}));
-  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields + '&level=ad&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
-  return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+  return fbFetchAllAccounts(function(acc){
+    return FB_API + 'act_' + acc.id + '/insights?fields=' + fields + '&level=ad&time_range=' + timeRange + '&limit=500&access_token=' + acc.token;
+  });
 }
 function vfFetchCreatives(){
-  var url = FB_API + ACCOUNT_ID + '/ads?fields=id,name,created_time,creative{thumbnail_url}&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
-  return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+  return fbFetchAllAccounts(function(acc){
+    return FB_API + 'act_' + acc.id + '/ads?fields=id,name,created_time,creative{thumbnail_url}&limit=500&access_token=' + acc.token;
+  });
 }
 function vfMerge(ins, crvs){
   var cm = {};
@@ -1694,12 +1696,14 @@ function ifFetchInsights(){
   var since = new Date(now); since.setDate(since.getDate()-29);
   var fields = 'ad_id,ad_name,spend,impressions,reach,frequency,clicks,ctr,cpc,cpm,actions,action_values';
   var timeRange = encodeURIComponent(JSON.stringify({since:toYMD(since), until:toYMD(now)}));
-  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields + '&level=ad&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
-  return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+  return fbFetchAllAccounts(function(acc){
+    return FB_API + 'act_' + acc.id + '/insights?fields=' + fields + '&level=ad&time_range=' + timeRange + '&limit=500&access_token=' + acc.token;
+  });
 }
 function ifFetchCreatives(){
-  var url = FB_API + ACCOUNT_ID + '/ads?fields=id,name,created_time,creative{thumbnail_url,video_id}&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
-  return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+  return fbFetchAllAccounts(function(acc){
+    return FB_API + 'act_' + acc.id + '/ads?fields=id,name,created_time,creative{thumbnail_url,video_id}&limit=500&access_token=' + acc.token;
+  });
 }
 function ifMerge(ins, crvs){
   var cm = {};
@@ -1935,6 +1939,34 @@ function fbBreakdownUrl(breakdowns, days){
     + '&level=account&breakdowns=' + breakdowns
     + '&time_range=' + timeRange + '&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
 }
+
+function fbFetchAllAccounts(urlBuilder){
+  var allAccounts=[];
+  FB_PAGES.forEach(function(p){ p.accounts.forEach(function(a){ allAccounts.push(a); }); });
+  if(allAccounts.length===0){ return Promise.resolve([]); }
+  return Promise.all(allAccounts.map(function(acc){
+    var url = urlBuilder(acc);
+    return fetch(url).then(function(r){return r.json();}).then(function(d){ return d.data || []; }).catch(function(){ return []; });
+  })).then(function(results){
+    var merged=[];
+    results.forEach(function(rows){ merged = merged.concat(rows); });
+    return merged;
+  });
+}
+function fbFetchAllAccountsBreakdown(breakdowns, days){
+  var today = todayBangkok();
+  var until = today;
+  var start;
+  if(days===-1){ start=addDaysStr(today,-1); until=start; }
+  else { start = days<=1 ? today : addDaysStr(today, -(days-1)); }
+  var timeRange = encodeURIComponent(JSON.stringify({since:start, until:until}));
+  var fields = 'spend,impressions,actions,action_values';
+  return fbFetchAllAccounts(function(acc){
+    return FB_API + 'act_' + acc.id + '/insights?fields=' + fields
+      + '&level=account&breakdowns=' + breakdowns
+      + '&time_range=' + timeRange + '&limit=500&access_token=' + acc.token;
+  }).then(function(rows){ return {data: rows}; });
+}
 function extractPA(ins){
   var purchases = 0;
   (ins.actions||[]).forEach(function(a){
@@ -1961,10 +1993,10 @@ function loadBuyersData(){
   var el = document.getElementById('buyersBody');
   if(el) el.innerHTML = '<div class="fx-empty">กำลังโหลดข้อมูลผู้ซื้อ...</div>';
   Promise.all([
-    fetch(fbBreakdownUrl('age,gender', buyersRangeDays)).then(function(r){return r.json();}),
-    fetch(fbBreakdownUrl('region', buyersRangeDays)).then(function(r){return r.json();}),
-    fetch(fbBreakdownUrl('publisher_platform,platform_position', buyersRangeDays)).then(function(r){return r.json();}),
-    fetch(fbBreakdownUrl('hourly_stats_aggregated_by_advertiser_time_zone', buyersRangeDays)).then(function(r){return r.json();})
+    fbFetchAllAccountsBreakdown('age,gender', buyersRangeDays),
+    fbFetchAllAccountsBreakdown('region', buyersRangeDays),
+    fbFetchAllAccountsBreakdown('publisher_platform,platform_position', buyersRangeDays),
+    fbFetchAllAccountsBreakdown('hourly_stats_aggregated_by_advertiser_time_zone', buyersRangeDays)
   ]).then(function(results){
     buyersLoading = false;
     var errRes = results.filter(function(d){ return d && d.error; })[0];
