@@ -724,39 +724,53 @@ function aggregateByDate(rows){
 }
 
 function loadData(){
-  document.getElementById('loadingState').style.display = 'block';
-  document.getElementById('dashContent').style.display = 'none';
+  document.getElementById('loadingState').style.display='block';
+  document.getElementById('dashContent').style.display='none';
   hideBanner();
 
-  var now = new Date();
-  var since = new Date(now); since.setDate(since.getDate()-89);
-  var sinceStr = toYMD(since), untilStr = toYMD(now);
-  var fields = 'campaign_id,campaign_name,adset_name,spend,impressions,clicks,actions,action_values';
-  var timeRange = encodeURIComponent(JSON.stringify({since:sinceStr, until:untilStr}));
-  var url = FB_API + ACCOUNT_ID + '/insights?fields=' + fields
-    + '&level=adset&time_range=' + timeRange
-    + '&time_increment=1&limit=500&access_token=' + ACCOUNT_TOKEN_NAME;
+  var now=new Date();
+  var since=new Date(now); since.setDate(since.getDate()-89);
+  var sinceStr=toYMD(since), untilStr=toYMD(now);
+  var fields='campaign_id,campaign_name,adset_name,spend,impressions,clicks,actions,action_values';
+  var timeRange=encodeURIComponent(JSON.stringify({since:sinceStr, until:untilStr}));
 
-  fetchAllPages(url, []);
+  var allAccounts=[];
+  FB_PAGES.forEach(function(p){ p.accounts.forEach(function(a){ allAccounts.push(a); }); });
+
+  if(allAccounts.length===0){ finishLoad([]); return; }
+
+  var merged=[];
+  var remaining=allAccounts.length;
+  allAccounts.forEach(function(acc){
+    var url=FB_API+'act_'+acc.id+'/insights?fields='+fields
+      +'&level=adset&time_range='+timeRange
+      +'&time_increment=1&limit=500&access_token='+acc.token;
+    fetchAllPages(url, [], function(rows){
+      merged=merged.concat(rows);
+      remaining--;
+      if(remaining<=0) finishLoad(merged);
+    });
+  });
 }
 
-function fetchAllPages(url, accumulated){
+function fetchAllPages(url, accumulated, cb){
+  cb = cb || finishLoad;
   fetch(url).then(function(r){return r.json();}).then(function(d){
     if(d.error){
-      showBanner('❌ FB API: ' + (d.error.message || JSON.stringify(d.error)));
-      finishLoad(accumulated);
+      console.warn('FB API error', d.error);
+      cb(accumulated);
       return;
     }
     var data = d.data || [];
     accumulated = accumulated.concat(data.map(calcRow));
     if(d.paging && d.paging.next){
-      fetchAllPages(d.paging.next, accumulated);
+      fetchAllPages(d.paging.next, accumulated, cb);
     } else {
-      finishLoad(accumulated);
+      cb(accumulated);
     }
   }).catch(function(err){
-    showBanner('❌ เชื่อมต่อ API ไม่สำเร็จ: ' + err.message);
-    finishLoad(accumulated);
+    console.warn('FB API fetch failed', err);
+    cb(accumulated);
   });
 }
 
