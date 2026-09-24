@@ -845,7 +845,8 @@ function render(){if(pdCtxAccountId){pdRefreshAccountTable();return;}renderPageC
   document.getElementById('kRoasSub').textContent = roas>=1 ? 'คุ้มทุน ✅' : (tot.spend>0 ? 'ยังไม่คุ้มทุน' : '-');
   document.getElementById('kPnlSub').textContent = pnl>=0 ? 'กำไร' : 'ขาดทุน';
 
-  // table  var acctAggRange = aggregateByAccount(rawRows.filter(function(r){ return r.date>=start && r.date<=end; }));
+  // table
+  var acctAggRange = aggregateByAccount(rawRows.filter(function(r){ return r.date>=start && r.date<=end; }));
 
   var tbody = document.getElementById('dailyTable');
   var acctNames = Object.keys(acctAggRange).filter(function(k){ return acctAggRange[k].spend >= 100; }).sort(function(a,b){ var ra = acctAggRange[a].spend>0 ? acctAggRange[a].revenue/acctAggRange[a].spend : 0; var rb = acctAggRange[b].spend>0 ? acctAggRange[b].revenue/acctAggRange[b].spend : 0; return rb - ra; }).slice(0,5);
