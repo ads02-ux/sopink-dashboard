@@ -553,7 +553,7 @@ footer b{color:var(--pink-dark)}
     </div>
 
     <div class="panel">
-      <h2>🏆 TOP 5 บัญชี (ยอดใช้จ่ายสูงสุด)</h2>
+      <h2>🏆 TOP 5 บัญชี (ROAS สูงสุด)</h2>
       <div style="overflow-x:auto">
         <table>
           <thead>
@@ -847,7 +847,7 @@ function render(){if(pdCtxAccountId){pdRefreshAccountTable();return;}renderPageC
 
   // table
   var tbody = document.getElementById('dailyTable');
-  var acctNames = Object.keys(acctAgg).sort(function(a,b){ return acctAgg[b].spend - acctAgg[a].spend; }).slice(0,5);
+  var acctNames = Object.keys(acctAgg).filter(function(k){ return acctAgg[k].spend >= 1000; }).sort(function(a,b){ var ra = acctAgg[a].spend>0 ? acctAgg[a].revenue/acctAgg[a].spend : 0; var rb = acctAgg[b].spend>0 ? acctAgg[b].revenue/acctAgg[b].spend : 0; return rb - ra; }).slice(0,5);
   if(acctNames.length === 0){
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลในช่วงที่เลือก</td></tr>';
   } else {
