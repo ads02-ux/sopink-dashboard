@@ -1459,12 +1459,12 @@ function vfFetchInsights(){
 }
 function vfFetchCreatives(){
   return fbFetchAllAccounts(function(acc){
-    return FB_API + 'act_' + acc.id + '/ads?fields=id,name,created_time,creative{thumbnail_url}&limit=500&access_token=' + acc.token;
+    return FB_API + 'act_' + acc.id + '/ads?fields=id,name,created_time,creative{thumbnail_url,video_id}&limit=500&access_token=' + acc.token;
   });
 }
-function vfMerge(ins, crvs){
+function vfMerge(ins, crs){
   var cm = {};
-  crvs.forEach(function(c){ cm[c.id] = c; });
+  crs.forEach(function(c){ cm[c.id] = c; });
   var priority = ['omni_purchase','purchase','offsite_conversion.fb_pixel_purchase','lead','onsite_conversion.lead_grouped','link_click'];
   return ins.map(function(row){
     var cr = cm[row.ad_id] || {};
@@ -1481,6 +1481,7 @@ function vfMerge(ins, crvs){
       adId: row.ad_id,
       name: (cr.name || row.ad_name || 'ไม่ระบุ').substring(0,60),
       thumb: (cr.creative && cr.creative.thumbnail_url) ? cr.creative.thumbnail_url : '',
+      vid: (cr.creative && cr.creative.video_id) ? cr.creative.video_id : '',
       spend: parseFloat(row.spend)||0,
       imp: parseInt(row.impressions)||0,
       v3s: vfGetA(row.video_play_actions, 'video_view'),
@@ -1627,9 +1628,10 @@ function vfTbl(d){
   var wrap = document.getElementById('vfTblWrap');
   if(!d.length){ wrap.innerHTML = '<div class="fx-empty">ไม่พบวีดีโอที่ผ่านเกณฑ์</div>'; return; }
   var srt = d.slice().sort(function(a,b){return b.score-a.score;});
+  window.__vfTblRows = srt;
   var hdrs = ['ครีเอทีฟ','วันรัน','คะแนน','ผลประเมิน','ยอดใช้จ่าย','อิมเพรสชัน','ผู้ชม 3 วิ','อัตราฮุก %','25% (ผู้ชม)','50% (ผู้ชม)','75% (ผู้ชม)','95% (ผู้ชม)','อัตราสไลด์/อิมเพรสชัน','สไลด์/ผู้ชม','ต้นทุน/ผลลัพธ์'];
   var html = '<table class="vf-tbl"><thead><tr>' + hdrs.map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead><tbody>';
-  srt.forEach(function(d0){
+  srt.forEach(function(d0, idx0){
     var scColor = d0.score>=55?'#10b981':(d0.score>=45?'#f59e0b':'#f87171');
     var p25 = d0.v3s>0 ? (d0.p25/d0.v3s*100).toFixed(1)+'%' : '—';
     var p50 = d0.v3s>0 ? (d0.p50/d0.v3s*100).toFixed(1)+'%' : '—';
@@ -1640,7 +1642,9 @@ function vfTbl(d){
     var lead = (d0.leadRate*100).toFixed(2)+'%';
     var cpa = d0.cpa>0 ? fmtMoney(d0.cpa) : '—';
     var qIcon = d0.quad==='ขยายผล' ? '📈 ' : (d0.quad==='พิจารณาปิด' ? '✗ ' : '✓ ');
-    var thumbHtml = d0.thumb ? '<img class="vf-thumb" src="'+d0.thumb+'" onerror="this.style.display=\'none\'">' : '<div class="vf-thumb-ph">🎬</div>';
+    var canPlay = !!(d0.vid || d0.thumb);
+    var thumbInner = d0.thumb ? '<img class="vf-thumb" src="'+d0.thumb+'" onerror="this.style.display=\'none\'">' : '<div class="vf-thumb-ph">🎬</div>';
+    var thumbHtml = canPlay ? '<button type="button" class="vf-thumb-btn" data-idx="'+idx0+'" style="border:0;background:none;padding:0;cursor:pointer;display:flex">'+thumbInner+'</button>' : thumbInner;
     html += '<tr><td><div class="vf-name-cell">'+thumbHtml+'<span class="vf-name-text" title="'+d0.name+'">'+d0.name+'</span></div></td>'
       + '<td>'+d0.days+'</td>'
       + '<td><span class="vf-score-badge" style="background:'+scColor+'">'+d0.score+'</span></td>'
@@ -1653,6 +1657,14 @@ function vfTbl(d){
       + '<td>'+slide+'</td><td>'+lead+'</td><td>'+cpa+'</td></tr>';
   });
   wrap.innerHTML = html + '</tbody></table>';
+  wrap.querySelectorAll('.vf-thumb-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var d0 = window.__vfTblRows[parseInt(this.dataset.idx)];
+      if(!d0) return;
+      if(d0.vid){ openCampVideoModal('https://www.facebook.com/watch/?v=' + d0.vid); return; }
+      if(d0.thumb && typeof openCampImageModal==='function'){ openCampImageModal(d0.thumb); }
+    });
+  });
 }
 function renderVideo(){
   var el = document.getElementById('videoBody');
