@@ -2619,6 +2619,12 @@ window.addEventListener('load', function(){
   campLogRefresh();
 });
 
+var _sbNotes = (function(){ try{ var s = localStorage.getItem('_sbNotes'); if(s) return JSON.parse(s); }catch(e){} return {}; })();
+function _sbNotesDateKey(){ var now = new Date(); function p(n){ return n<10?'0'+n:n; } return now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate()); }
+function _sbNotesGet(dt,name){ if(!dt||!name) return {old:'',new:''}; return ((_sbNotes[dt]||{})[name]) || {old:'',new:''}; }
+function _sbNotesSave(dt,name,field,val){ if(!dt||!name) return; if(!_sbNotes[dt]) _sbNotes[dt] = {}; if(!_sbNotes[dt][name]) _sbNotes[dt][name] = {old:'',new:''}; _sbNotes[dt][name][field] = val; try{ localStorage.setItem('_sbNotes', JSON.stringify(_sbNotes)); }catch(e){} }
+function _sbNotesCellHtml(campId,field){ var dt = _sbNotesDateKey(); var nv = _sbNotesGet(dt,campId); var v = nv[field]||''; return '<input type="text" value="'+v.replace(/"/g,'&quot;')+'" placeholder="+ กรอก" data-dt="'+dt+'" data-nm="'+campId+'" data-field="'+field+'" class="sb-notes-input" onchange="_sbNotesSave(this.dataset.dt,this.dataset.nm,this.dataset.field,this.value)" onclick="event.stopPropagation()" style="width:82px;padding:6px 7px;border:1px solid var(--border);border-radius:6px;font-size:.72rem;text-align:center;font-family:inherit" />'; }
+
 var campColumnDefs = {
   toggle: {label:'เปิด/ปิด', cell:function(c){ return c.campaignId?campToggleCellHtml(c.campaignId):''; }},
   name: {label:'แคมเปญ', cell:function(c){ var _b = c.campaignId?campEditBadgeHtml(c.campaignId):''; return '<span class="ell" title="'+c.campaign.replace(/"/g,'&quot;')+'">'+c.campaign+'</span>'+_b; }},
@@ -2632,9 +2638,11 @@ var campColumnDefs = {
   roas: {label:'ROAS', thClass:'num', tdClass:'num', cell:function(c){ return c.roas.toFixed(2)+'x'; }},
   costPerConv: {label:'ต้นทุนการสนทนา', thClass:'num', tdClass:'num', cell:function(c){ var v = c.conversations>0?(c.spend/c.conversations):0; return v>0?fmtMoney(v):'—'; }},
   costPerPurch: {label:'ต้นทุนการซื้อ', thClass:'num', tdClass:'num', cell:function(c){ var v = c.purchases>0?(c.spend/c.purchases):0; return v>0?fmtMoney(v):'—'; }},
-  budget: {label:'งบ/วัน', cell:function(c){ return c.campaignId?campBudgetCellHtml(c.campaignId):''; }}
+  budget: {label:'งบ/วัน', cell:function(c){ return c.campaignId?campBudgetCellHtml(c.campaignId):''; }},
+  budgetOld: {label:'ยอดเก่า', cell:function(c){ return c.campaignId?_sbNotesCellHtml(c.campaignId,'old'):''; }},
+  budgetNew: {label:'ยอดใหม่', cell:function(c){ return c.campaignId?_sbNotesCellHtml(c.campaignId,'new'):''; }}
 };
-var campColOrderDefault = ['toggle','name','status','spend','impressions','ctr','purchases','conversations','revenue','roas','costPerConv','costPerPurch','budget'];
+var campColOrderDefault = ['toggle','name','status','spend','impressions','ctr','purchases','conversations','revenue','roas','costPerConv','costPerPurch','budget','budgetOld','budgetNew'];
 var campColOrder = (function(){
   try{
     var saved = JSON.parse(localStorage.getItem('campColOrder')||'null');
