@@ -845,14 +845,15 @@ function render(){if(pdCtxAccountId){pdRefreshAccountTable();return;}renderPageC
   document.getElementById('kRoasSub').textContent = roas>=1 ? 'คุ้มทุน ✅' : (tot.spend>0 ? 'ยังไม่คุ้มทุน' : '-');
   document.getElementById('kPnlSub').textContent = pnl>=0 ? 'กำไร' : 'ขาดทุน';
 
-  // table
+  // table  var acctAggRange = aggregateByAccount(rawRows.filter(function(r){ return r.date>=start && r.date<=end; }));
+
   var tbody = document.getElementById('dailyTable');
-  var acctNames = Object.keys(acctAgg).filter(function(k){ return acctAgg[k].spend >= 1000; }).sort(function(a,b){ var ra = acctAgg[a].spend>0 ? acctAgg[a].revenue/acctAgg[a].spend : 0; var rb = acctAgg[b].spend>0 ? acctAgg[b].revenue/acctAgg[b].spend : 0; return rb - ra; }).slice(0,5);
+  var acctNames = Object.keys(acctAggRange).filter(function(k){ return acctAggRange[k].spend >= 1000; }).sort(function(a,b){ var ra = acctAggRange[a].spend>0 ? acctAggRange[a].revenue/acctAggRange[a].spend : 0; var rb = acctAggRange[b].spend>0 ? acctAggRange[b].revenue/acctAggRange[b].spend : 0; return rb - ra; }).slice(0,5);
   if(acctNames.length === 0){
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-soft);padding:20px">ไม่มีข้อมูลในช่วงที่เลือก</td></tr>';
   } else {
     tbody.innerHTML = acctNames.map(function(name){
-      var m = acctAgg[name];
+      var m = acctAggRange[name];
       var r = m.spend>0 ? (m.revenue/m.spend) : 0;
       return '<tr><td>'+name+'</td><td class="num">'+fmtMoney(m.spend)+'</td><td class="num">'+fmtInt(m.impressions)+
         '</td><td class="num">'+fmtInt(m.purchases)+'</td><td class="num">'+fmtMoney(m.revenue)+'</td><td class="num">'+r.toFixed(2)+'x</td></tr>';
