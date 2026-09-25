@@ -1481,7 +1481,7 @@ function vfGetDateRange(){
 }
 function vfFetchInsights(){
   var range = vfGetDateRange();
-  var fields = 'ad_id,ad_name,spend,impressions,actions,video_play_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions';
+  var fields = 'ad_id,ad_name,spend,impressions,actions,video_play_actions,video_p25_watched_actions,video_p50_watched_actions,video_p75_watched_actions,video_p95_watched_actions,action_values';
   var timeRange = encodeURIComponent(JSON.stringify({since:range.since, until:range.until}));
   return fbFetchAllAccounts(function(acc){
     return FB_API + 'act_' + acc.id + '/insights?fields=' + fields + '&level=ad&time_range=' + timeRange + '&limit=500&access_token=' + acc.token;
@@ -1499,10 +1499,11 @@ function vfMerge(ins, crs){
   return ins.map(function(row){
     var cr = cm[row.ad_id] || {};
     var results = 0;
+    var revenue = 0;
     if(row.actions){
       for(var p=0;p<priority.length;p++){
         var rv = vfGetA(row.actions, priority[p]);
-        if(rv>0){ results = rv; break; }
+        if(rv>0){ results = rv; if(row.action_values){ revenue = vfGetA(row.action_values, priority[p]); } break; }
       }
     }
     var created = cr.created_time ? new Date(cr.created_time) : null;
@@ -1520,7 +1521,7 @@ function vfMerge(ins, crs){
       p50: vfGetA(row.video_p50_watched_actions, 'video_view'),
       p75: vfGetA(row.video_p75_watched_actions, 'video_view'),
       p95: vfGetA(row.video_p95_watched_actions, 'video_view'),
-      results: results, days: days,
+      results: results, revenue: revenue, days: days,
       score:0, verdict:'', vcolor:'', quad:'', qx:0, qy:0
     };
   });
@@ -1531,6 +1532,7 @@ function vfCalc(data){
     d.hookRate = d.imp>0 ? d.v3s/d.imp : 0;
     d.convRate = d.imp>0 ? d.results/d.imp : 0;
     d.cpa = d.results>0 ? d.spend/d.results : 0;
+    d.roas = d.spend>0 ? d.revenue/d.spend : 0;
     d.leadRate = d.v3s>0 ? d.results/d.v3s : 0;
     d.slideRate = d.imp>0 ? d.results/d.imp : 0;
   });
@@ -1660,7 +1662,7 @@ function vfTbl(d){
   if(!d.length){ wrap.innerHTML = '<div class="fx-empty">ไม่พบวีดีโอที่ผ่านเกณฑ์</div>'; return; }
   var srt = d.slice().sort(function(a,b){return b.score-a.score;});
   window.__vfTblRows = srt;
-  var hdrs = ['ครีเอทีฟ','วันรัน','คะแนน','ผลประเมิน','ยอดใช้จ่าย','อิมเพรสชัน','ผู้ชม 3 วิ','อัตราฮุก %','25% (ผู้ชม)','50% (ผู้ชม)','75% (ผู้ชม)','95% (ผู้ชม)','อัตราสไลด์/อิมเพรสชัน','สไลด์/ผู้ชม','ต้นทุน/ผลลัพธ์'];
+  var hdrs = ['ครีเอทีฟ','วันรัน','คะแนน','ผลประเมิน','ยอดใช้จ่าย','ยอดขาย','ROAS','อิมเพรสชัน','ผู้ชม 3 วิ','อัตราฮุก %','25% (ผู้ชม)','50% (ผู้ชม)','75% (ผู้ชม)','95% (ผู้ชม)','อัตราสไลด์/อิมเพรสชัน','สไลด์/ผู้ชม','ต้นทุน/ผลลัพธ์'];
   var html = '<table class="vf-tbl"><thead><tr>' + hdrs.map(function(h){return '<th>'+h+'</th>';}).join('') + '</tr></thead><tbody>';
   srt.forEach(function(d0, idx0){
     var scColor = d0.score>=55?'#10b981':(d0.score>=45?'#f59e0b':'#f87171');
@@ -1681,6 +1683,8 @@ function vfTbl(d){
       + '<td><span class="vf-score-badge" style="background:'+scColor+'">'+d0.score+'</span></td>'
       + '<td style="color:'+d0.vcolor+';font-weight:700">'+qIcon+d0.verdict+'</td>'
       + '<td>'+(d0.spend>0?fmtMoney(d0.spend):'—')+'</td>'
+      + '<td>'+(d0.revenue>0?fmtMoney(d0.revenue):'—')+'</td>'
+      + '<td>'+(d0.roas>0?d0.roas.toFixed(2)+'x':'—')+'</td>'
       + '<td>'+fmtInt(d0.imp)+'</td>'
       + '<td>'+fmtInt(d0.v3s)+'</td>'
       + '<td>'+hook+'</td>'
