@@ -795,6 +795,7 @@ function finishLoad(rows){
   rawRows = rows;
   dailyAgg = aggregateByDate(rows);
   acctAgg = aggregateByAccount(rows);
+  refreshCampDrawerIfOpen();
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('dashContent').style.display = 'block';
   document.getElementById('lastUpdated').textContent = 'อัปเดตล่าสุด: ' + new Date().toLocaleString('th-TH');
@@ -968,6 +969,7 @@ var loadedViews = {};var pdPage=null;var pdRange='7d';var pdAccount=null;var pdE
     pdEnterAccountContext(pdAccount, rows);
     fetchCampMeta();
     pdRefreshAccountTable();
+    refreshCampDrawerIfOpen();
   });
 }
 
@@ -2780,6 +2782,10 @@ function ensureCampDrawer(){
   document.getElementById('campDrawerClose').addEventListener('click', closeCampDrawer);
 }
 
+function refreshCampDrawerIfOpen(){
+  var ov = document.getElementById('campDrawerOverlay');
+  if(ov && ov.classList.contains('open') && campDrawerCampaign){ renderCampDrawerBody(); }
+}
 function openCampDrawer(name, id){
   ensureCampDrawer();
   campDrawerCampaign = {name:name, id:id||''};
