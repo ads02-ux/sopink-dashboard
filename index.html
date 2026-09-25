@@ -339,11 +339,12 @@ footer b{color:var(--pink-dark)}
 .vf-tbl th:first-child{text-align:left}
 .vf-tbl td{padding:5px 4px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;font-size:10.5px}
 .vf-tbl td:first-child{text-align:left}
-.vf-name-cell{display:flex;align-items:center;gap:8px;max-width:145px}
+.vf-name-cell{display:flex;align-items:center;gap:8px;max-width:160px}
+.vf-name-textwrap{display:flex;flex-direction:column;min-width:0;flex:1}
 .vf-thumb{width:38px;height:38px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--pink-pale)}
 .vf-thumb-ph{width:38px;height:38px;border-radius:6px;flex-shrink:0;background:var(--pink-pale);display:flex;align-items:center;justify-content:center}
-.vf-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
-.vf-acc-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#9ca3af;margin-top:2px}
+.vf-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;min-width:0}
+.vf-acc-text{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#9ca3af;margin-top:2px;min-width:0}
 .vf-score-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-weight:800;font-size:11px}
 
 /* ---- campaign detail drawer ---- */
@@ -1679,7 +1680,7 @@ function vfTbl(d){
     var canPlay = !!(d0.vid || d0.thumb);
     var thumbInner = d0.thumb ? '<img class="vf-thumb" src="'+d0.thumb+'" onerror="this.style.display=\'none\'">' : '<div class="vf-thumb-ph">🎬</div>';
     var thumbHtml = canPlay ? '<button type="button" class="vf-thumb-btn" data-idx="'+idx0+'" style="border:0;background:none;padding:0;cursor:pointer;display:flex">'+thumbInner+'</button>' : thumbInner;
-    html += '<tr><td><div class="vf-name-cell">'+thumbHtml+'<span class="vf-name-text" title="'+d0.name+'">'+d0.name+'</span>'+(d0.accName?'<span class="vf-acc-text">'+d0.accName+'</span>':'')+'</div></td>'
+    html += '<tr><td><div class="vf-name-cell">'+thumbHtml+'<div class="vf-name-textwrap"><span class="vf-name-text" title="'+d0.name+'">'+d0.name+'</span>'+(d0.accName?'<span class="vf-acc-text" title="'+d0.accName+'">'+d0.accName+'</span>':'')+'</div></div></td>'
       + '<td>'+d0.days+'</td>'
       + '<td><span class="vf-score-badge" style="background:'+scColor+'">'+d0.score+'</span></td>'
       + '<td style="color:'+d0.vcolor+';font-weight:700">'+qIcon+d0.verdict+'</td>'
