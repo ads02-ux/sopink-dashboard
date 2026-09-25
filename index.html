@@ -2793,13 +2793,25 @@ function openCampDrawer(name, id){
   document.getElementById('campDrawerTitle').textContent = name;
   document.getElementById('campDrawerOverlay').classList.add('open');
   document.getElementById('campDrawer').classList.add('open');
-  renderCampDrawerBody();
+  if(pdAccount){
+    var _dr0 = campDrawerRangeDatesFor(campDrawerRangeDays);
+    fetchPageInsights([pdAccount], _dr0[0], _dr0[1], 'campaign', function(rows){ rawRows = rows; renderCampDrawerBody(); });
+  } else {
+    renderCampDrawerBody();
+  }
 }
 function closeCampDrawer(){
   var ov = document.getElementById('campDrawerOverlay'); if(ov) ov.classList.remove('open');
   var dw = document.getElementById('campDrawer'); if(dw) dw.classList.remove('open');
 }
 
+function campDrawerRangeDatesFor(days){
+  var today = todayBangkok();
+  var start, end;
+  if(days===0){ start = end = addDaysStr(today,-1); }
+  else { start = days<=1 ? today : addDaysStr(today,-(days-1)); end = today; }
+  return [start,end];
+}
 function campRowsFor(days){
   var today = todayBangkok();
   var start, end;
@@ -2842,7 +2854,16 @@ function renderCampDrawerBody(){
   body.innerHTML = pillsHtml + campDrawerActionBoxHtml(campDrawerCampaign.id) + kpiHtml + chartHtml + aiHtml + creativesHtml + ceoHtml;
 
   document.querySelectorAll('.camp-range').forEach(function(b){
-    b.addEventListener('click', function(){ campDrawerRangeDays = parseInt(this.dataset.days); renderCampDrawerBody(); });
+    b.addEventListener('click', function(){
+      var _days = parseInt(this.dataset.days);
+      campDrawerRangeDays = _days;
+      if(pdAccount){
+        var _dr = campDrawerRangeDatesFor(_days);
+        fetchPageInsights([pdAccount], _dr[0], _dr[1], 'campaign', function(rows){ rawRows = rows; renderCampDrawerBody(); });
+      } else {
+        renderCampDrawerBody();
+      }
+    });
   });
   document.getElementById('campFetchCreatives').addEventListener('click', fetchCampCreatives);
   document.getElementById('campCeoBtn').addEventListener('click', showCeoSummary);
